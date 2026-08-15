@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+*.egg-info/
+.venv/
+venv/
+
+# Generated analysis/report/render output (127MB+ as of 2026-08-15) --
+# reproducible from source + a video, not project source itself.
+assets/outputs/
+
+# Local, machine-specific Claude Code settings.
+.claude/settings.local.json
+
+# Real video source data, not committed by default (see
+# assets/sample_videos/backhand/README.txt) -- sample_backhand.mp4 in that
+# same folder is the one deliberate, small (<5MB) exception, committed as a
+# CI test fixture, so it is NOT listed here.
+assets/sample_videos/backhand/sample_backhand2.mp4
+assets/sample_videos/qa_variants/
+assets/sample_videos/*.mp4

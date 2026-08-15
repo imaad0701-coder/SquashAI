@@ -1,0 +1,1 @@
+"""Player/session domain contracts."""

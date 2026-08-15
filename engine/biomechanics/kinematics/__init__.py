@@ -1,0 +1,1 @@
+"""Pure kinematic calculation contracts."""

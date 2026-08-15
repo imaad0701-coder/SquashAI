@@ -1,0 +1,12 @@
+# Pinned to 0.10.9: mediapipe's Windows wheels from 0.10.35 onward (and all
+# of 1.0.0) dropped the legacy mp.solutions.pose API this project's
+# MediaPipePoseDetectorAdapter depends on (engine/tracking/pose/mediapipe_estimator.py).
+# Bump only after re-verifying `mp.solutions.pose.Pose` still exists on win_amd64.
+mediapipe==0.10.9
+numpy
+
+# System dependency (not installable via pip): ffmpeg + ffprobe must be on
+# PATH for engine/preprocessing/ffmpeg_wrapper.py and frame_sync.py.
+
+# Test-only dependencies (pytest, coverage, etc.) live in requirements-dev.txt,
+# not here -- this file is the runtime dependency set for engine/ and main.py.

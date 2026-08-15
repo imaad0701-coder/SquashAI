@@ -1,0 +1,6 @@
+# Dev/test dependencies. Installs runtime deps too, so `pip install -r
+# requirements-dev.txt` in a fresh venv is enough to run the test suite.
+-r requirements.txt
+
+pytest
+pytest-cov
