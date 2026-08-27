@@ -29,7 +29,8 @@ Everything on this page is computed from the current code and test run, not hand
 
 | File | Lines | ABC contracts | Protocol contracts | Concrete classes |
 |---|---|---|---|---|
-| `engine/phases/phase_detector.py` | 13 | `PhaseDetector.detect()` | - | - |
+| `engine/phases/contact_detection.py` | 205 | - | - | `WristSpeedSample`, `ContactCandidate`, `SwingWindow` |
+| `engine/phases/phase_detector.py` | 290 | `PhaseDetector.detect()` | - | `KinematicPhaseDetector` |
 | `engine/phases/timing.py` | 19 | `TimingAnalyzer.analyze()` | - | `PhaseTiming` |
 | `engine/scoring/benchmarks.py` | 17 | - | - | `BenchmarkSet` |
 | `engine/scoring/score_engine.py` | 14 | `ScoreEngine.score()` | - | - |
@@ -42,7 +43,9 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 286
+- tests run: 339
 - failures: 0
 - errors: 0
-- skipped: 0
+- skipped: 1
+- skip reasons:
+  - No real backhand sample video found (looked for assets\sample_videos\backhand\sample_backhand.mp4, assets\sample_videos\backhand\sample_backhand.mov, assets\sample_videos\backhand\sample_backhand.avi, assets\sample_videos\backhand\sample_backhand.mkv) -- see assets/sample_videos/backhand/README.txt to add one
