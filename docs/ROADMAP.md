@@ -3,7 +3,7 @@
 
 Generated from the frontmatter of each node file in `docs/roadmap/`. To change a status or a dependency, edit that node's file and re-run `python tools/gen_roadmap.py`; CI fails if this page is stale. Statuses are claims about the repository, so each node file's prose should cite the evidence behind its status. For what the code actually contains today, see `docs/status_generated.md`.
 
-16 nodes (shipped: 1, validated: 1, in-progress: 2, research: 1, not-started: 11).
+16 nodes (shipped: 2, validated: 1, in-progress: 2, not-started: 11).
 
 ## Dependency graph
 
@@ -21,7 +21,7 @@ graph LR
     multi_person_tracking["multi-person-tracking<br/><i>not-started</i>"]
     multiplayer_heatmap["multiplayer-heatmap<br/><i>not-started</i>"]
     player_reid["player-reid<br/><i>not-started</i>"]
-    pose_backend_decision["pose-backend-decision<br/><i>research</i>"]
+    pose_backend_decision["pose-backend-decision<br/><i>shipped</i>"]
     rally_point_match_segmentation["rally-point-match-segmentation<br/><i>not-started</i>"]
     shot_outcome["shot-outcome<br/><i>not-started</i>"]
     shot_type_classifier["shot-type-classifier<br/><i>not-started</i>"]
@@ -57,20 +57,20 @@ graph LR
     classDef research fill:#8250df,stroke:#6639ba,color:#ffffff
     classDef blocked fill:#cf222e,stroke:#a40e26,color:#ffffff
     classDef not_started fill:#eaeef2,stroke:#8c959f,color:#24292f
-    class analysis_result_contract shipped
+    class analysis_result_contract,pose_backend_decision shipped
     class tracking_biomechanics validated
     class contact_phase_detection,demo_launch in_progress
-    class pose_backend_decision research
     class ball_tracking,court_calibration,findings_engine,loss_explanation_coach,multi_person_tracking,multiplayer_heatmap,player_reid,rally_point_match_segmentation,shot_outcome,shot_type_classifier,single_player_heatmap not_started
 ```
 
 ## Nodes by status
 
-### shipped (1)
+### shipped (2)
 
 | Node | Depends on | Blocks | Goal |
 |---|---|---|---|
 | [`analysis-result-contract`](roadmap/analysis-result-contract.md) | - | `demo-launch`, `findings-engine` | A typed, stable output schema for one clip's phase analysis (`AnalysisResult`, `SwingPhases`, `PhaseBoundary`), designed so that downstream consumers never confuse detector output with ground truth. |
+| [`pose-backend-decision`](roadmap/pose-backend-decision.md) | - | `multi-person-tracking` | Choose the single-person pose model that production uses, and record the decision and the evidence behind it in the repo. |
 
 ### validated (1)
 
@@ -84,12 +84,6 @@ graph LR
 |---|---|---|---|
 | [`contact-phase-detection`](roadmap/contact-phase-detection.md) | `tracking-biomechanics` | `findings-engine`, `shot-type-classifier` | Detect each swing in a clip, its contact frame, and its phase boundaries (prep, backswing, forward swing, contact, follow-through, recovery) from wrist-speed and rotation kinematics. |
 | [`demo-launch`](roadmap/demo-launch.md) | `analysis-result-contract`, `tracking-biomechanics` | - | A local upload-and-review demo: upload a clip and see the skeleton overlay, per-frame measurements with their validity, and phase output, without reading JSON. |
-
-### research (1)
-
-| Node | Depends on | Blocks | Goal |
-|---|---|---|---|
-| [`pose-backend-decision`](roadmap/pose-backend-decision.md) | - | `multi-person-tracking` | Choose the single-person pose model that production uses, and record the decision and the evidence behind it in the repo. |
 
 ### not-started (11)
 
