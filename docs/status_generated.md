@@ -41,6 +41,8 @@ Everything on this page is computed from the current code and test run, not hand
 | `engine/scoring/score_engine.py` | 14 | `ScoreEngine.score()` | - | - |
 | `engine/feedback/coach.py` | 13 | `Coach.generate_feedback()` | - | - |
 | `engine/feedback/recommendations.py` | 11 | - | `RecommendationRule.apply()` | - |
+| `engine/calibration/court_geometry.py` | 69 | - | - | - |
+| `engine/calibration/court_homography.py` | 285 | - | - | `CalibrationError`, `CourtHomography`, `LeaveOneOutResult`, `CourtCalibration`, `FootCourtPosition` |
 | `engine/calibration/interfaces.py` | 29 | - | `CalibrationProvider.load()`, `CalibrationProvider.pixel_to_world()` | `CameraIntrinsics`, `CalibrationConfig` |
 | `engine/persistence/interfaces.py` | 35 | - | `LandmarkRepository.save()`, `LandmarkRepository.load()`, `MetricsRepository.save()`, `MetricsRepository.load()`, `ReportRepository.save()`, `ReportRepository.load()` | `StorageConfig` |
 | `engine/session/interfaces.py` | 29 | - | - | `Player`, `SessionConfig`, `Session` |
@@ -48,7 +50,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 414
+- tests run: 426
 - failures: 0
 - errors: 0
 - skipped: 2

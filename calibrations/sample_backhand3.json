@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "clip_id": "sample_backhand3",
+  "video_path": "assets/sample_videos/backhand/sample_backhand3.mp4",
+  "frame_index": 286,
+  "resolution": [
+    1080,
+    1920
+  ],
+  "rotation_degrees": 0,
+  "points": [
+    {
+      "name": "front_left_corner",
+      "pixel": [
+        153.0,
+        997.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "front_right_corner",
+      "pixel": [
+        1043.0,
+        942.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre; right-wall base not visible, corner inferred from where the tin-board base line ends"
+    },
+    {
+      "name": "short_line_left_wall",
+      "pixel": [
+        52.0,
+        1197.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "left_box_front_inner",
+      "pixel": [
+        524.0,
+        1160.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "t_junction",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "right_box_front_inner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "short_line_right_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "left_box_back_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "left_box_back_inner",
+      "pixel": [
+        622.0,
+        1305.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "right_box_back_inner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "right_box_back_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "back_left_corner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "half_court_line_back_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "back_right_corner",
+      "pixel": null,
+      "note": null
+    }
+  ],
+  "meta": {
+    "created_at": "2026-10-02T14:30:25",
+    "updated_at": "2026-10-02T14:30:26"
+  }
+}

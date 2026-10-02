@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "clip_id": "sample_forehand1",
+  "video_path": "assets/sample_videos/sample_forehand1.mp4",
+  "frame_index": 0,
+  "resolution": [
+    720,
+    1280
+  ],
+  "rotation_degrees": 0,
+  "points": [
+    {
+      "name": "front_left_corner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "front_right_corner",
+      "pixel": [
+        522.0,
+        630.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "short_line_left_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "left_box_front_inner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "t_junction",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "right_box_front_inner",
+      "pixel": [
+        279.0,
+        721.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "short_line_right_wall",
+      "pixel": [
+        571.0,
+        723.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "left_box_back_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "left_box_back_inner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "right_box_back_inner",
+      "pixel": [
+        203.0,
+        797.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "right_box_back_wall",
+      "pixel": [
+        608.0,
+        802.0
+      ],
+      "note": "placed by Claude from a 5-6x zoomed crop of this frame (not a human click); line centre"
+    },
+    {
+      "name": "back_left_corner",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "half_court_line_back_wall",
+      "pixel": null,
+      "note": null
+    },
+    {
+      "name": "back_right_corner",
+      "pixel": null,
+      "note": null
+    }
+  ],
+  "meta": {
+    "created_at": "2026-10-02T14:30:26",
+    "updated_at": "2026-10-02T14:30:26"
+  }
+}
