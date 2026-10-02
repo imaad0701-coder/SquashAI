@@ -262,8 +262,8 @@ def analyze(
         analysis_result = None
         try:
             frames = debug_report["landmark_frames"]
-            segments = KinematicPhaseDetector(contact_rule=_PHASE_CONTACT_RULE.value).detect(frames)
-            analysis_result = build_analysis_result(frames, segments, _PHASE_CONTACT_RULE)
+            swings = KinematicPhaseDetector(contact_rule=_PHASE_CONTACT_RULE.value).detect_swings(frames)
+            analysis_result = build_analysis_result(frames, swings, _PHASE_CONTACT_RULE)
             phases, phases_error = _to_jsonable(analysis_result), None
         except Exception as exc:  # noqa: BLE001 -- unvalidated detection code must not break the tracking output
             phases, phases_error = None, f"{type(exc).__name__}: {exc}"

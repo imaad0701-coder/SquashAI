@@ -63,8 +63,8 @@ def compute_analysis_result(clip_id: str) -> AnalysisResult:
     frames = debug_report["landmark_frames"]
 
     detector = KinematicPhaseDetector(contact_rule="peak_speed")
-    segments = detector.detect(frames)
-    return build_analysis_result(frames, segments, ContactRule.PEAK_SPEED)
+    swings = detector.detect_swings(frames)
+    return build_analysis_result(frames, swings, ContactRule.PEAK_SPEED)
 
 
 def _golden_path(clip_id: str) -> str:

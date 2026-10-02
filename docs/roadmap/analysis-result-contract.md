@@ -21,7 +21,7 @@ Golden-file tests pin the builder's output on real clips, and any schema change 
 
 ## Open questions
 
-- The builder re-calls `KinematicPhaseDetector`'s private helpers to classify `derivation_method`, which couples it tightly to `_segment_one_swing`'s branch structure (documented as a deliberate trade-off).
+- ~~The builder re-calls `KinematicPhaseDetector`'s private helpers to classify `derivation_method`.~~ **Resolved 2026-10-02.** `KinematicPhaseDetector.detect_swings()` now returns each boundary's derivation natively: it is recorded by `_segment_one_swing` when it decides, and the builder consumes it directly, with no private-method calls (a test guards this). Both golden snapshots are byte-identical, and old and new builders agree on all 6 labelled clips under both contact rules.
 
 ## Evidence so far
 

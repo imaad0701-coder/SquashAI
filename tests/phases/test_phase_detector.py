@@ -151,6 +151,50 @@ class MultiSwingTests(unittest.TestCase):
             self.assertEqual(later.start_frame_index, earlier.end_frame_index + 1)
 
 
+class NativeDerivationTests(unittest.TestCase):
+    """detect_swings() carries each boundary's derivation method, recorded by
+    _segment_one_swing when it decides -- the structured source of truth
+    analysis_result_builder now consumes instead of re-running the
+    detector's private signal searches."""
+
+    def _two_swing_frames(self) -> tuple[LandmarkFrame, ...]:
+        return _frames_with_swings(160, ((10, 25), (90, 105)))
+
+    def test_detect_is_exactly_flattened_detect_swings(self) -> None:
+        frames = self._two_swing_frames()
+        for rule in ("peak_speed", "deceleration_onset"):
+            detector = KinematicPhaseDetector(contact_rule=rule)
+            flattened = tuple(seg for swing in detector.detect_swings(frames) for seg in swing.segments)
+            self.assertEqual(detector.detect(frames), flattened)
+
+    def test_every_swing_records_a_derivation_for_each_non_contact_boundary(self) -> None:
+        from engine.types.phases import DerivationMethod
+
+        for swing in KinematicPhaseDetector().detect_swings(self._two_swing_frames()):
+            self.assertEqual(set(swing.derivation),
+                             {PhaseLabel.READY, PhaseLabel.BACKSWING, PhaseLabel.FORWARD_SWING,
+                              PhaseLabel.FOLLOW_THROUGH, PhaseLabel.RECOVERY})
+            self.assertIs(swing.derivation[PhaseLabel.READY], DerivationMethod.ARCHITECTURAL)
+            self.assertIs(swing.derivation[PhaseLabel.FORWARD_SWING], DerivationMethod.UNRELIABLE)
+            self.assertEqual(swing.contact_frame,
+                             next(s for s in swing.segments if s.label == PhaseLabel.CONTACT).start_frame_index)
+
+    def test_clean_pulse_backswing_is_detected(self) -> None:
+        from engine.types.phases import DerivationMethod
+
+        swing = KinematicPhaseDetector().detect_swings(_single_swing_frames(80, 20, 40))[0]
+        self.assertIs(swing.derivation[PhaseLabel.BACKSWING], DerivationMethod.DETECTED)
+
+    def test_builder_never_calls_detector_private_methods(self) -> None:
+        import inspect
+
+        import engine.phases.analysis_result_builder as builder
+
+        source = inspect.getsource(builder)
+        self.assertNotIn("KinematicPhaseDetector._", source)
+        self.assertNotIn("_segment_one_swing(", source)
+
+
 class GroupBySwingTests(unittest.TestCase):
     def test_empty_input_returns_empty_tuple(self) -> None:
         self.assertEqual(group_by_swing(()), ())

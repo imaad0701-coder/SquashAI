@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Mapping
 
 from engine.biomechanics.kinematics.derivatives import DerivativeConfig, DerivativeMethod
 from engine.biomechanics.kinematics.velocity import VelocityCalculator
@@ -16,7 +19,7 @@ from engine.phases.contact_detection import (
 )
 from engine.types.biomechanics import VelocityMeasurement
 from engine.types.landmarks import LandmarkFrame
-from engine.types.phases import PhaseLabel, PhaseSegment
+from engine.types.phases import DerivationMethod, PhaseLabel, PhaseSegment
 from engine.utils.geometry import dot_product, magnitude
 
 
@@ -58,6 +61,44 @@ _PHASE_ORDER: tuple[PhaseLabel, ...] = (
     PhaseLabel.FOLLOW_THROUGH,
     PhaseLabel.RECOVERY,
 )
+
+
+@dataclass(frozen=True)
+class DetectedSwing:
+    """One swing as KinematicPhaseDetector found it: its 6 segments (in
+    phase order) plus how each non-contact boundary was derived, recorded at
+    the moment _segment_one_swing chose it -- computed once, by the code that
+    made the decision, not reverse-engineered afterwards.
+
+    derivation keys: READY, BACKSWING, FORWARD_SWING, FOLLOW_THROUGH,
+    RECOVERY (contact is always the detected primary signal). A boundary is
+    DETECTED when its own signal search produced the pre-clamp value,
+    ARCHITECTURAL when a fallback (range edge / contact+1) did. READY is
+    always ARCHITECTURAL (range_start, never searched). FORWARD_SWING is
+    always UNRELIABLE whichever of its two methods fired -- a policy from
+    validation against human review, not a property of the run (see
+    DerivationMethod's docstring)."""
+
+    segments: tuple[PhaseSegment, ...]
+    range_start: int
+    range_end: int
+    contact_frame: int
+    derivation: Mapping[PhaseLabel, DerivationMethod]
+
+
+def build_search_ranges(first_frame_index: int, last_frame_index: int, windows) -> list[tuple[int, int]]:
+    """Partitions a clip into one contiguous, non-overlapping search range
+    per swing window -- each swing gets exclusive claim to the frames around
+    it, out to the midpoint with its neighbor or the clip edge at either end.
+    Public so callers needing the same construction for other window sets
+    (analysis_result_builder's unfiltered-window comparison) use this exact
+    code rather than a copy."""
+    ranges: list[tuple[int, int]] = []
+    for i, window in enumerate(windows):
+        range_start = first_frame_index if i == 0 else ranges[-1][1] + 1
+        range_end = (window.end_frame + windows[i + 1].start_frame) // 2 if i + 1 < len(windows) else last_frame_index
+        ranges.append((range_start, range_end))
+    return ranges
 
 
 class KinematicPhaseDetector(PhaseDetector):
@@ -104,6 +145,12 @@ class KinematicPhaseDetector(PhaseDetector):
         self._follow_through_speed_fraction = follow_through_speed_fraction
 
     def detect(self, frames: tuple[LandmarkFrame, ...]) -> tuple[PhaseSegment, ...]:
+        return tuple(segment for swing in self.detect_swings(frames) for segment in swing.segments)
+
+    def detect_swings(self, frames: tuple[LandmarkFrame, ...]) -> tuple[DetectedSwing, ...]:
+        """The structured form of detect(): one DetectedSwing per swing,
+        carrying each boundary's derivation method. detect() is exactly this,
+        flattened -- one code path, so the two can't disagree."""
         if not frames:
             return ()
 
@@ -117,43 +164,32 @@ class KinematicPhaseDetector(PhaseDetector):
         rotations = ShoulderRotationCalculator()
         rotation_by_index = {f.timing.frame_index: rotations.calculate(f) for f in frames}
 
-        first_frame_index = frames[0].timing.frame_index
-        last_frame_index = frames[-1].timing.frame_index
-
-        # Partition the whole clip into one contiguous, non-overlapping
-        # search range per window -- each swing gets exclusive claim to the
-        # frames around it (out to the midpoint with its neighbor, or the
-        # clip edges at either end) to search for its own prep/recovery.
-        ranges: list[tuple[int, int]] = []
-        for i, window in enumerate(windows):
-            range_start = first_frame_index if i == 0 else ranges[-1][1] + 1
-            if i + 1 < len(windows):
-                range_end = (window.end_frame + windows[i + 1].start_frame) // 2
-            else:
-                range_end = last_frame_index
-            ranges.append((range_start, range_end))
-
+        ranges = build_search_ranges(frames[0].timing.frame_index, frames[-1].timing.frame_index, windows)
         contacts = contact_candidates_in_windows(speeds, windows, CONTACT_RULES[self._contact_rule])
 
-        all_segments: list[PhaseSegment] = []
+        swings: list[DetectedSwing] = []
         for (range_start, range_end), contact in zip(ranges, contacts):
             if contact is None:
                 continue  # this window produced no usable candidate -- no swing recorded for it
-            all_segments.extend(
+            swings.append(
                 self._segment_one_swing(speeds, velocities, rotation_by_index, range_start, range_end, contact.frame_index)
             )
-        return tuple(all_segments)
+        return tuple(swings)
 
     def _segment_one_swing(
         self, speeds, velocities, rotation_by_index, range_start: int, range_end: int, contact_frame: int
-    ) -> list[PhaseSegment]:
+    ) -> DetectedSwing:
         baseline_speed = self._baseline_speed(speeds, range_start, range_end)
         pre_contact_peak = self._peak_speed_in_range(speeds, range_start, contact_frame)
         threshold = baseline_speed + self._rest_speed_fraction * max(pre_contact_peak - baseline_speed, 0.0)
 
+        derivation = {PhaseLabel.READY: DerivationMethod.ARCHITECTURAL, PhaseLabel.FORWARD_SWING: DerivationMethod.UNRELIABLE}
+
         backswing_start = self._first_crossing_up(speeds, range_start, contact_frame, threshold)
+        derivation[PhaseLabel.BACKSWING] = DerivationMethod.DETECTED
         if backswing_start is None:
             backswing_start = range_start
+            derivation[PhaseLabel.BACKSWING] = DerivationMethod.ARCHITECTURAL
 
         forward_swing_start = self._shoulder_rotation_extremum(rotation_by_index, backswing_start, contact_frame)
         if forward_swing_start is None:
@@ -169,12 +205,16 @@ class KinematicPhaseDetector(PhaseDetector):
             follow_through_start = self._first_crossing_down(
                 speeds, contact_frame, range_end, self._follow_through_speed_fraction * contact_peak
             )
+        derivation[PhaseLabel.FOLLOW_THROUGH] = DerivationMethod.DETECTED
         if follow_through_start is None or follow_through_start <= contact_frame:
             follow_through_start = min(contact_frame + 1, range_end)
+            derivation[PhaseLabel.FOLLOW_THROUGH] = DerivationMethod.ARCHITECTURAL
 
         recovery_start = self._first_crossing_down(speeds, follow_through_start, range_end, threshold)
+        derivation[PhaseLabel.RECOVERY] = DerivationMethod.DETECTED
         if recovery_start is None or recovery_start <= follow_through_start:
             recovery_start = range_end
+            derivation[PhaseLabel.RECOVERY] = DerivationMethod.ARCHITECTURAL
 
         starts = {
             PhaseLabel.READY: range_start,
@@ -205,7 +245,8 @@ class KinematicPhaseDetector(PhaseDetector):
             # clamped up to steal a frame from the next phase, which would
             # break strict contiguity (later.start == earlier.end + 1).
             segments.append(PhaseSegment(label=label, start_frame_index=start, end_frame_index=end))
-        return segments
+        return DetectedSwing(segments=tuple(segments), range_start=range_start, range_end=range_end,
+                             contact_frame=contact_frame, derivation=MappingProxyType(derivation))
 
     @staticmethod
     def _wrist_velocities(frames: tuple[LandmarkFrame, ...], wrist) -> tuple[VelocityMeasurement, ...]:

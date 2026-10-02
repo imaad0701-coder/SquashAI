@@ -29,10 +29,10 @@ Everything on this page is computed from the current code and test run, not hand
 
 | File | Lines | ABC contracts | Protocol contracts | Concrete classes |
 |---|---|---|---|---|
-| `engine/phases/analysis_result_builder.py` | 195 | - | - | - |
+| `engine/phases/analysis_result_builder.py` | 102 | - | - | - |
 | `engine/phases/contact_detection.py` | 233 | - | - | `WristSpeedSample`, `ContactCandidate`, `SwingWindow` |
 | `engine/phases/frame_timing.py` | 56 | - | - | - |
-| `engine/phases/phase_detector.py` | 290 | `PhaseDetector.detect()` | - | `KinematicPhaseDetector` |
+| `engine/phases/phase_detector.py` | 331 | `PhaseDetector.detect()` | - | `DetectedSwing`, `KinematicPhaseDetector` |
 | `engine/phases/timing.py` | 19 | `TimingAnalyzer.analyze()` | - | `PhaseTiming` |
 | `engine/scoring/benchmarks.py` | 17 | - | - | `BenchmarkSet` |
 | `engine/scoring/finding_rules.py` | 213 | - | - | `Series`, `Statistic`, `MetricSpec`, `ConsistencyRule`, `AsymmetrySeries`, `SidedMetric`, `AsymmetryRule`, `SequencingAnchor`, `SequencingRule` |
@@ -53,7 +53,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 443
+- tests run: 447
 - failures: 0
 - errors: 0
 - skipped: 2

@@ -81,7 +81,7 @@ def main() -> int:
         _r, dr = ShotPipeline(ShotType.FOREHAND).run_with_debug(AnalysisRequest(
             video_path=video, shot_type=ShotType.FOREHAND, player_id="x", session_id="x", handedness=None))
         frames = dr["landmark_frames"]
-        result = build_analysis_result(frames, KinematicPhaseDetector(contact_rule="peak_speed").detect(frames),
+        result = build_analysis_result(frames, KinematicPhaseDetector(contact_rule="peak_speed").detect_swings(frames),
                                        ContactRule.PEAK_SPEED)
         contacts = [s.contact_frame for s in result.swings]
         per_swing = contact_court_positions(video, frames, contacts, cal, data["frame_index"], camera,
