@@ -13,7 +13,6 @@ A typed, stable output schema for one clip's phase analysis (`AnalysisResult`, `
 
 The schema itself has landed. Follow-on work, tracked here until it gets its own node:
 
-- Commit `engine/phases/analysis_result_builder.py` and its golden tests (`tests/phases/`). As of 2026-10-02 they exist only in the working tree.
 - Wire `AnalysisResult` into `AnalysisResponse`/`PipelineResult`. The type's own docstring says this hasn't been done yet.
 
 ## Validation bar
@@ -27,4 +26,5 @@ Golden-file tests pin the builder's output on real clips, and any schema change 
 ## Evidence so far
 
 - Commit `fc5be3c` ("Add AnalysisResult phase-data schema"), `engine/api/interfaces.py`, `engine/types/phases.py`.
+- Producer `engine/phases/analysis_result_builder.py`, with golden snapshots `tests/phases/golden/` (sample_backhand2, sample_backhand3) that were re-verified byte-for-byte against current code on 2026-10-02. The golden tests skip in CI because their fixture clips are local-only.
 - `demo/backend/main.py` already calls `build_analysis_result`.

@@ -11,7 +11,6 @@ A local upload-and-review demo: upload a clip and see the skeleton overlay, per-
 
 ## What's needed
 
-- Commit `demo/`. As of 2026-10-02 it is untracked.
 - Bring `demo/README.md` in line with the code. The README says the demo shows nothing from `engine.phases`, but `demo/backend/main.py` now runs `build_analysis_result`.
 - Decide what "launch" means here (local only, or hosted) before adding any deployment config.
 
