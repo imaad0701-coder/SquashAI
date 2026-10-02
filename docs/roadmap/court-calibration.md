@@ -2,7 +2,7 @@
 id: court-calibration
 status: in-progress
 depends_on: [tracking-biomechanics]
-blocks: [single-player-heatmap, shot-outcome, multiplayer-heatmap]
+blocks: [single-player-heatmap, shot-outcome, multiplayer-heatmap, camera-motion-tracking]
 ---
 
 ## Goal
@@ -33,7 +33,7 @@ The full numbers and images are in `docs/evidence/court_calibration/README.md`.
 
 ## What's needed next
 
-1. **Handle camera motion.** Either re-estimate the homography per frame (register each frame to the calibration frame, or track the clicked lines), or require tripod footage for this feature and check for motion at upload.
+1. **Handle camera motion.** The pre-flight check now flags moving cameras (provisional 3% drift warning; it flags both calibrated clips). Per-frame re-estimation is being researched in `camera-motion-tracking`: on forehand1 it holds within about 4 px for about 3 s and drifts by about 1–1.5 px/s after that. The options remain: re-estimate the homography per frame (register each frame to the calibration frame, or track the clicked lines), or require tripod footage for this feature and check for motion at upload.
 2. **More points spread across the floor**, plus at least one known-position checkpoint left out of the fit, on footage that shows them. That is what decides the lens-distortion question.
 3. **A human re-click** of the existing calibrations with `tools/calibrate_court.py`. The current points were placed by Claude from zoomed crops.
 

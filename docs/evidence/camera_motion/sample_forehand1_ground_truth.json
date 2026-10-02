@@ -1,0 +1,167 @@
+{
+  "clip": "sample_forehand1",
+  "method": "Placed by Claude by reading line-centre junctions off 4x zoomed crops (tools/camera_motion_experiment.py crops) -- independent of the tracker's floor features, but read with the tracker's prediction marked at the crop centre; reading precision roughly +/-1.5 px. null = hidden by the player.",
+  "frames": [
+    {
+      "ms_target": 1000,
+      "frame": 60,
+      "points": {
+        "front_right_corner": [
+          518.2,
+          616.7
+        ],
+        "right_box_front_inner": null,
+        "short_line_right_wall": [
+          564.3,
+          710.1
+        ],
+        "right_box_back_inner": null,
+        "right_box_back_wall": [
+          601.4,
+          788.8
+        ]
+      }
+    },
+    {
+      "ms_target": 3000,
+      "frame": 180,
+      "points": {
+        "front_right_corner": [
+          519.4,
+          616.6
+        ],
+        "right_box_front_inner": null,
+        "short_line_right_wall": [
+          564.0,
+          711.4
+        ],
+        "right_box_back_inner": null,
+        "right_box_back_wall": [
+          600.4,
+          790.5
+        ]
+      }
+    },
+    {
+      "ms_target": 5000,
+      "frame": 299,
+      "points": {
+        "front_right_corner": [
+          539.5,
+          566.5
+        ],
+        "right_box_front_inner": null,
+        "short_line_right_wall": [
+          583.2,
+          660.2
+        ],
+        "right_box_back_inner": null,
+        "right_box_back_wall": [
+          620.7,
+          739.6
+        ]
+      }
+    },
+    {
+      "ms_target": 7000,
+      "frame": 419,
+      "points": {
+        "front_right_corner": [
+          473.5,
+          646.5
+        ],
+        "right_box_front_inner": null,
+        "short_line_right_wall": [
+          518.2,
+          741.6
+        ],
+        "right_box_back_inner": [
+          150.7,
+          812.2
+        ],
+        "right_box_back_wall": [
+          554.5,
+          819.6
+        ]
+      }
+    },
+    {
+      "ms_target": 9000,
+      "frame": 539,
+      "points": {
+        "front_right_corner": [
+          474.0,
+          624.1
+        ],
+        "right_box_front_inner": [
+          228.9,
+          711.8
+        ],
+        "short_line_right_wall": [
+          518.6,
+          718.8
+        ],
+        "right_box_back_inner": [
+          151.7,
+          786.2
+        ],
+        "right_box_back_wall": [
+          552.3,
+          797.8
+        ]
+      }
+    },
+    {
+      "ms_target": 11000,
+      "frame": 659,
+      "points": {
+        "front_right_corner": [
+          460.7,
+          621.4
+        ],
+        "right_box_front_inner": [
+          213.9,
+          708.0
+        ],
+        "short_line_right_wall": [
+          503.2,
+          716.4
+        ],
+        "right_box_back_inner": [
+          140.8,
+          782.2
+        ],
+        "right_box_back_wall": [
+          535.6,
+          794.8
+        ]
+      }
+    },
+    {
+      "ms_target": 13200,
+      "frame": 791,
+      "points": {
+        "front_right_corner": [
+          467.3,
+          591.9
+        ],
+        "right_box_front_inner": [
+          219.2,
+          681.8
+        ],
+        "short_line_right_wall": [
+          509.0,
+          687.5
+        ],
+        "right_box_back_inner": [
+          139.8,
+          755.3
+        ],
+        "right_box_back_wall": [
+          542.6,
+          763.7
+        ]
+      }
+    }
+  ]
+}

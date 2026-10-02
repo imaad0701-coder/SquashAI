@@ -50,7 +50,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 426
+- tests run: 429
 - failures: 0
 - errors: 0
 - skipped: 2

@@ -3,7 +3,7 @@
 
 Generated from the frontmatter of each node file in `docs/roadmap/`. To change a status or a dependency, edit that node's file and re-run `python tools/gen_roadmap.py`; CI fails if this page is stale. Statuses are claims about the repository, so each node file's prose should cite the evidence behind its status. For what the code actually contains today, see `docs/status_generated.md`.
 
-16 nodes (shipped: 2, validated: 1, in-progress: 4, not-started: 9).
+17 nodes (shipped: 2, validated: 1, in-progress: 4, research: 1, not-started: 9).
 
 ## Dependency graph
 
@@ -13,6 +13,7 @@ An arrow `A --> B` means B depends on A.
 graph LR
     analysis_result_contract["analysis-result-contract<br/><i>shipped</i>"]
     ball_tracking["ball-tracking<br/><i>not-started</i>"]
+    camera_motion_tracking["camera-motion-tracking<br/><i>research</i>"]
     contact_phase_detection["contact-phase-detection<br/><i>in-progress</i>"]
     court_calibration["court-calibration<br/><i>in-progress</i>"]
     demo_launch["demo-launch<br/><i>in-progress</i>"]
@@ -27,6 +28,7 @@ graph LR
     shot_type_classifier["shot-type-classifier<br/><i>not-started</i>"]
     single_player_heatmap["single-player-heatmap<br/><i>not-started</i>"]
     tracking_biomechanics["tracking-biomechanics<br/><i>validated</i>"]
+    court_calibration --> camera_motion_tracking
     tracking_biomechanics --> contact_phase_detection
     tracking_biomechanics --> court_calibration
     analysis_result_contract --> demo_launch
@@ -61,6 +63,7 @@ graph LR
     class analysis_result_contract,pose_backend_decision shipped
     class tracking_biomechanics validated
     class contact_phase_detection,court_calibration,demo_launch,findings_engine in_progress
+    class camera_motion_tracking research
     class ball_tracking,loss_explanation_coach,multi_person_tracking,multiplayer_heatmap,player_reid,rally_point_match_segmentation,shot_outcome,shot_type_classifier,single_player_heatmap not_started
 ```
 
@@ -84,9 +87,15 @@ graph LR
 | Node | Depends on | Blocks | Goal |
 |---|---|---|---|
 | [`contact-phase-detection`](roadmap/contact-phase-detection.md) | `tracking-biomechanics` | `findings-engine`, `shot-type-classifier` | Detect each swing in a clip, its contact frame, and its phase boundaries (prep, backswing, forward swing, contact, follow-through, recovery) from wrist-speed and rotation kinematics. |
-| [`court-calibration`](roadmap/court-calibration.md) | `tracking-biomechanics` | `multiplayer-heatmap`, `shot-outcome`, `single-player-heatmap` | Map a player's foot position from pixel space to real court coordinates (metres), through a floor homography computed from manually placed court landmarks. Automatic court-line detection waits until manual calibration is proven. |
+| [`court-calibration`](roadmap/court-calibration.md) | `tracking-biomechanics` | `camera-motion-tracking`, `multiplayer-heatmap`, `shot-outcome`, `single-player-heatmap` | Map a player's foot position from pixel space to real court coordinates (metres), through a floor homography computed from manually placed court landmarks. Automatic court-line detection waits until manual calibration is proven. |
 | [`demo-launch`](roadmap/demo-launch.md) | `analysis-result-contract`, `findings-engine`, `tracking-biomechanics` | - | A local upload-and-review demo: upload a clip and see the skeleton overlay, per-frame measurements with their validity, phase output and findings, without reading JSON. |
 | [`findings-engine`](roadmap/findings-engine.md) | `analysis-result-contract`, `contact-phase-detection`, `tracking-biomechanics` | `demo-launch`, `loss-explanation-coach` | Deterministic within-player findings: swing-to-swing consistency, left/right asymmetry, and elbow→wrist sequencing. Each finding is a measured number with explicit trust gates, never a narrative or a verdict label. |
+
+### research (1)
+
+| Node | Depends on | Blocks | Goal |
+|---|---|---|---|
+| [`camera-motion-tracking`](roadmap/camera-motion-tracking.md) | `court-calibration` | - | Keep a court calibration valid while the camera moves (handheld, panning or zooming), so that court coordinates work on the footage people actually record, without requiring a tripod. |
 
 ### not-started (9)
 
