@@ -1,0 +1,107 @@
+{
+  "sample_backhand": {
+    "check_status": "pass",
+    "observed": "0.6% drift (max at 2.9 s), rotation 0.1 deg, zoom 0.3%",
+    "visual_verdict": "not visually checked (CI fixture, trimmed from sample_backhand2)",
+    "measurement": {
+      "max_drift_pct": 0.553,
+      "max_drift_at_ms": 2900.0,
+      "max_rotation_deg": 0.143,
+      "max_scale_change_pct": 0.326,
+      "measured_ms": 2900.0,
+      "gap_ms": 0.0,
+      "samples": 29,
+      "median_inlier_ratio": 0.652
+    }
+  },
+  "sample_backhand1": {
+    "check_status": "pass",
+    "observed": "0.2% drift (max at 8.0 s), rotation 0.0 deg, zoom 0.3%",
+    "visual_verdict": "not visually checked",
+    "measurement": {
+      "max_drift_pct": 0.195,
+      "max_drift_at_ms": 8000.0,
+      "max_rotation_deg": 0.03,
+      "max_scale_change_pct": 0.27,
+      "measured_ms": 8000.0,
+      "gap_ms": 0.0,
+      "samples": 80,
+      "median_inlier_ratio": 0.75
+    }
+  },
+  "sample_backhand2": {
+    "check_status": "pass",
+    "observed": "1.1% drift (max at 5.5 s), rotation 0.6 deg, zoom 0.7%",
+    "visual_verdict": "static (frame-difference image shows only the player)",
+    "measurement": {
+      "max_drift_pct": 1.143,
+      "max_drift_at_ms": 5500.0,
+      "max_rotation_deg": 0.552,
+      "max_scale_change_pct": 0.698,
+      "measured_ms": 9700.0,
+      "gap_ms": 0.0,
+      "samples": 97,
+      "median_inlier_ratio": 0.652
+    }
+  },
+  "sample_backhand3": {
+    "check_status": "warn",
+    "observed": "7.1% drift (max at 2.8 s), rotation 1.2 deg, zoom 2.0%",
+    "visual_verdict": "moving (court-calibration overlay drifts ~90 px; panning)",
+    "measurement": {
+      "max_drift_pct": 7.114,
+      "max_drift_at_ms": 2800.0,
+      "max_rotation_deg": 1.166,
+      "max_scale_change_pct": 1.988,
+      "measured_ms": 13100.0,
+      "gap_ms": 0.0,
+      "samples": 131,
+      "median_inlier_ratio": 0.507
+    }
+  },
+  "sample_forehand1": {
+    "check_status": "warn",
+    "observed": "6.8% drift (max at 13.2 s), rotation 1.1 deg, zoom 1.2%",
+    "visual_verdict": "moving (court-calibration overlay drifts by mid-clip)",
+    "measurement": {
+      "max_drift_pct": 6.764,
+      "max_drift_at_ms": 13223.14,
+      "max_rotation_deg": 1.126,
+      "max_scale_change_pct": 1.154,
+      "measured_ms": 13223.14,
+      "gap_ms": 0.0,
+      "samples": 132,
+      "median_inlier_ratio": 0.657
+    }
+  },
+  "sample_forehand2": {
+    "check_status": "pass",
+    "observed": "0.4% drift (max at 9.5 s), rotation 0.2 deg, zoom 0.3%",
+    "visual_verdict": "static (frame-difference image shows only the player)",
+    "measurement": {
+      "max_drift_pct": 0.391,
+      "max_drift_at_ms": 9500.0,
+      "max_rotation_deg": 0.19,
+      "max_scale_change_pct": 0.334,
+      "measured_ms": 9500.0,
+      "gap_ms": 0.0,
+      "samples": 95,
+      "median_inlier_ratio": 0.855
+    }
+  },
+  "sample_forehand3": {
+    "check_status": "warn",
+    "observed": "9.9% drift (max at 29.7 s), rotation 2.8 deg, zoom 4.6%",
+    "visual_verdict": "moving (frame-difference image shows court lines doubled)",
+    "measurement": {
+      "max_drift_pct": 9.866,
+      "max_drift_at_ms": 29700.0,
+      "max_rotation_deg": 2.774,
+      "max_scale_change_pct": 4.648,
+      "measured_ms": 34600.0,
+      "gap_ms": 0.0,
+      "samples": 346,
+      "median_inlier_ratio": 0.503
+    }
+  }
+}

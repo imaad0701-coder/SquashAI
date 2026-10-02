@@ -30,6 +30,11 @@ click "Run pipeline". A ~300-frame clip takes on the order of 30 seconds on CPU.
    - **blur**: variance of the Laplacian over 8 sampled frames. This is never a hard reject, because no
      clip in this project has had its blur measured against pipeline accuracy. The warning threshold is
      a generic rule of thumb, and the demo says so.
+   - **camera motion**: background features are tracked from the first frame, and the camera's drift is
+     measured as a percentage of the frame diagonal. There is a warning at 3% or more. That line is
+     **provisional**, set from 7 clips: cameras confirmed static by eye measured 0.2–1.1%, and moving ones
+     6.8–9.9% (`docs/evidence/camera_motion/`). This check can't resolve drift below about 1%. A pass means
+     no large motion was found, not that the clip is safe for court calibration.
 2. **Tracking**: `ShotPipeline` runs exactly as it does in production. The full per-frame
    `debug_report` is returned.
 3. **Phase detection**: `engine.phases.analysis_result_builder` produces an `AnalysisResult`. If it
