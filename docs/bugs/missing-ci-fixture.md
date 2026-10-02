@@ -33,7 +33,7 @@ The file disappeared in a ~2.5-minute gap between labelling the forehand clips a
 - **Claude Code hooks:** none. The only file under `.claude/` is `settings.local.json`.
 - **Antivirus:** `Get-MpThreatDetection` returns no detections, and Controlled Folder Access is off.
 - **Recycle Bin:** no item matching `sample_backhand*`.
-- **Moved or renamed elsewhere:** no file of exactly 262318 bytes exists anywhere under the user profile or the repo.
+- **Moved or renamed elsewhere:** no other file of exactly 262318 bytes exists in the repo, `Downloads`, `Documents`, `Videos` or `OneDrive` under the user profile. The only match is the restored fixture itself. An earlier attempt to search the *whole* profile was cut off by a time limit before it finished, and an earlier version of this doc wrongly treated its empty output as a completed search. The scoped search above did complete.
 
 ## Most likely explanation
 
