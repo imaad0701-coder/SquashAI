@@ -82,9 +82,12 @@ class ContactCourtPositionTests(unittest.TestCase):
         self.assertAlmostEqual(fwd.elapsed_ms, 2000.0)
         self.assertTrue(np.allclose(back.left_foot_m, (2.0, 7.0), atol=1e-6))
         diag = (720 ** 2 + 1280 ** 2) ** 0.5
-        self.assertAlmostEqual(fwd.implied_tracking_error_px, implied_tracking_error_px(2000.0, diag))
-        self.assertGreater(fwd.implied_tracking_error_px, back.implied_tracking_error_px)  # grows with elapsed time
-        self.assertIsNotNone(fwd.implied_tracking_error_m)
+        self.assertAlmostEqual(fwd.tracking_error_px, implied_tracking_error_px(2000.0, diag))
+        self.assertGreater(fwd.tracking_error_px, back.tracking_error_px)  # grows with elapsed time
+        self.assertIsNotNone(fwd.tracking_error_m)
+        # Exact synthetic clicks -> leave-one-out errors of 0, so the combined +/- equals the tracking part here.
+        self.assertAlmostEqual(fwd.calibration_error_m, 0.0, places=6)
+        self.assertAlmostEqual(fwd.uncertainty_m, fwd.calibration_error_m + fwd.tracking_error_m)
         # Tracks only as far as needed, once per direction.
         self.assertEqual(sorted(tracker.calls), [("backward", 120), ("forward", 210)])
 
@@ -126,12 +129,40 @@ class ContactCourtPositionTests(unittest.TestCase):
         (p,) = contact_court_positions("v.mp4", _frames(), [far], _calibration(), ANCHOR, CameraMotionStatus.STATIC,
                                        tracker=tracker)
         self.assertEqual((p.availability, p.method), (Availability.AVAILABLE, PositionMethod.STATIC_CAMERA))
-        self.assertIsNone(p.implied_tracking_error_px)
+        self.assertIsNone(p.tracking_error_px)
+        self.assertAlmostEqual(p.uncertainty_m, p.calibration_error_m)  # calibration error only
+        self.assertIn("static camera", p.uncertainty_note)
         self.assertEqual(tracker.calls, [])
 
     def test_swing_without_contact_is_unavailable(self) -> None:
         (p,) = contact_court_positions("v.mp4", _frames(), [None], _calibration(), ANCHOR, CameraMotionStatus.STATIC)
         self.assertIs(p.availability, Availability.UNAVAILABLE)
+
+
+class CombinedUncertaintyTests(unittest.TestCase):
+    def test_calibration_error_is_added_to_tracking_error(self) -> None:
+        names = NAMES + ["left_box_front_inner"]
+        pts = [list(_px(*COURT_POINTS[n])) for n in names]
+        pts[1] = [pts[1][0] + 30.0, pts[1][1]]  # front_right_corner clicked 30 px off -> real leave-one-out error
+        cal = CourtCalibration.from_json({"clip_id": "x", "resolution": [720, 1280], "rotation_degrees": 0,
+                                          "points": [{"name": n, "pixel": p, "note": None} for n, p in zip(names, pts)]})
+        (p,) = contact_court_positions("v.mp4", _frames(), [180], cal, ANCHOR, CameraMotionStatus.MOVING,
+                                       tracker=fake_tracker())
+        self.assertGreater(p.calibration_error_m, 0.0)
+        self.assertAlmostEqual(p.uncertainty_m, p.calibration_error_m + p.tracking_error_m)  # straight sum
+        self.assertGreater(p.uncertainty_m, p.tracking_error_m)
+        self.assertIn("leave-one-out", p.calibration_error_basis)
+
+    def test_unknown_calibration_error_is_reported_as_unknown_not_tracking_only(self) -> None:
+        cal = CourtCalibration.from_json({"clip_id": "x", "resolution": [720, 1280], "rotation_degrees": 0,
+                                          "points": [{"name": n, "pixel": list(_px(*COURT_POINTS[n])), "note": None}
+                                                     for n in NAMES[:4]]})  # 4 points: no leave-one-out possible
+        (p,) = contact_court_positions("v.mp4", _frames(), [180], cal, ANCHOR, CameraMotionStatus.MOVING,
+                                       tracker=fake_tracker())
+        self.assertIs(p.availability, Availability.AVAILABLE)
+        self.assertIsNone(p.uncertainty_m)
+        self.assertIsNotNone(p.tracking_error_m)
+        self.assertIn("NOT the uncertainty", p.uncertainty_note)
 
 
 class MovementTrailTests(unittest.TestCase):

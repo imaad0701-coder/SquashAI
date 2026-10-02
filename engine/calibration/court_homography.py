@@ -239,6 +239,7 @@ class CourtCalibration:
     rotation_degrees: int
     point_names: tuple[str, ...]
     homography: CourtHomography
+    image_points: tuple[tuple[float, float], ...] = ()  # the clicks, same order as point_names
 
     @classmethod
     def from_json(cls, data: Mapping[str, Any]) -> CourtCalibration:
@@ -247,9 +248,66 @@ class CourtCalibration:
         if unknown:
             raise CalibrationError(f"unknown court point name(s): {unknown}")
         names = tuple(p["name"] for p in points)
-        h = fit_homography([tuple(p["pixel"]) for p in points], [COURT_POINTS[n] for n in names])
+        pixels = tuple(tuple(p["pixel"]) for p in points)
+        h = fit_homography(list(pixels), [COURT_POINTS[n] for n in names])
         return cls(clip_id=data["clip_id"], resolution=tuple(data["resolution"]),
-                   rotation_degrees=int(data.get("rotation_degrees", 0)), point_names=names, homography=h)
+                   rotation_degrees=int(data.get("rotation_degrees", 0)), point_names=names, homography=h,
+                   image_points=pixels)
+
+
+@dataclass(frozen=True)
+class CalibrationErrorEstimate:
+    error_m: float
+    basis: str  # how it was derived, in plain words, for display next to the number
+    nearest_point: str
+    nearest_distance_m: float
+
+
+# Inverse-distance-weighting exponent: power 2 is the conventional default
+# (Shepard), so nearby leave-one-out points dominate; not tuned.
+_IDW_POWER = 2.0
+
+
+def calibration_error_at(court_xy: tuple[float, float],
+                         loo: Sequence[LeaveOneOutResult]) -> CalibrationErrorEstimate | None:
+    """The calibration's own error near a court position, interpolated from
+    its leave-one-out results by inverse-distance weighting.
+
+    Leave-one-out error at a clicked point is how far that point lands (in
+    court metres) when the fit doesn't use it -- the calibration's measured
+    error *at that spot*. Interpolating between those spots gives a local
+    estimate: small near tightly clustered points, large near points the
+    others predict poorly (e.g. far-off front-wall corners).
+
+    Returns None when there's nothing to interpolate from (no computable
+    leave-one-out errors). Positions outside the clicked region are
+    extrapolated; there the estimate leans on the nearest points' errors and
+    may understate the true error -- callers keep the extrapolated flag."""
+    usable = [r for r in loo if r.court_error_m is not None]
+    if not usable:
+        return None
+    dists = [math.dist(court_xy, r.court_xy) for r in usable]
+    nearest = min(range(len(usable)), key=lambda i: dists[i])
+    if dists[nearest] < 1e-9:
+        return CalibrationErrorEstimate(usable[nearest].court_error_m, f"leave-one-out error at {usable[nearest].name}",
+                                        usable[nearest].name, 0.0)
+    weights = [1.0 / d ** _IDW_POWER for d in dists]
+    error = sum(w * r.court_error_m for w, r in zip(weights, usable)) / sum(weights)
+    return CalibrationErrorEstimate(
+        error_m=error,
+        basis=f"inverse-distance interpolation of {len(usable)} leave-one-out errors "
+              f"(nearest: {usable[nearest].name}, {dists[nearest]:.2f} m away)",
+        nearest_point=usable[nearest].name, nearest_distance_m=dists[nearest],
+    )
+
+
+def calibration_leave_one_out(calibration: CourtCalibration) -> list[LeaveOneOutResult] | None:
+    """None when the calibration has too few points for leave-one-out (< 5):
+    its error can't be estimated, and nothing should pretend otherwise."""
+    if len(calibration.point_names) < 5 or len(calibration.image_points) != len(calibration.point_names):
+        return None
+    return leave_one_out(calibration.point_names, calibration.image_points,
+                         [COURT_POINTS[n] for n in calibration.point_names])
 
 
 @dataclass(frozen=True)

@@ -30,7 +30,13 @@ import numpy as np
 
 from engine.biomechanics.posture.angle_calculator import MIN_LANDMARK_PRESENCE, MIN_LANDMARK_VISIBILITY
 from engine.calibration.camera_motion import CameraMotionStatus
-from engine.calibration.court_homography import CourtCalibration, FootCourtPosition, foot_court_positions
+from engine.calibration.court_homography import (
+    CourtCalibration,
+    FootCourtPosition,
+    calibration_error_at,
+    calibration_leave_one_out,
+    foot_court_positions,
+)
 from engine.calibration.floor_tracking import FloorTrack, apply, track_floor
 from engine.types.landmarks import LandmarkFrame, PoseLandmarkName
 
@@ -66,8 +72,17 @@ class ContactCourtPosition:
     left_foot_m: tuple[float, float] | None
     right_foot_m: tuple[float, float] | None
     extrapolated: bool  # outside the calibration's clicked region
-    implied_tracking_error_px: float | None  # TRACKED only; provisional envelope, see module docstring
-    implied_tracking_error_m: float | None  # the pixel bound converted at the feet's location
+    # The reported +/-: calibration error + tracking error, straight sum
+    # (conservative), in metres, for the less certain of the two feet. None
+    # when the calibration's own error can't be estimated (< 5 points) --
+    # never silently replaced by the tracking-only part.
+    uncertainty_m: float | None
+    uncertainty_note: str | None  # why it's None, or what it leaves out
+    # Components of uncertainty_m, kept for transparency:
+    calibration_error_m: float | None  # leave-one-out error interpolated at the foot position
+    calibration_error_basis: str | None
+    tracking_error_px: float | None  # TRACKED only; provisional envelope, see module docstring
+    tracking_error_m: float | None  # the pixel bound converted at the foot's location
 
 
 @dataclass(frozen=True)
@@ -107,7 +122,8 @@ def _metres_for_pixels(cal: CourtCalibration, px: tuple[float, float], radius_px
 
 
 def _unavailable(i: int, contact: int | None, reason: str, elapsed: float | None = None) -> ContactCourtPosition:
-    return ContactCourtPosition(i, contact, Availability.UNAVAILABLE, reason, None, None, elapsed, None, None, False, None, None)
+    return ContactCourtPosition(i, contact, Availability.UNAVAILABLE, reason, None, None, elapsed, None, None, False,
+                                None, None, None, None, None, None)
 
 
 def contact_court_positions(
@@ -126,6 +142,7 @@ def contact_court_positions(
     ts = {f.timing.frame_index: f.timing.timestamp_ms for f in frames}
     w, h = calibration.resolution
     diag = (w * w + h * h) ** 0.5
+    loo = calibration_leave_one_out(calibration)
     t0 = ts.get(anchor_frame)
     if t0 is None:
         return [_unavailable(i, c, f"calibration anchor frame {anchor_frame} is not in this clip's frames")
@@ -175,16 +192,51 @@ def contact_court_positions(
             to_anchor = (lambda p: p) if frame_to_anchor is None else (lambda p, m=frame_to_anchor: apply(m, *p))
             mapped = [None if p is None else calibration.homography.pixel_to_court(*to_anchor(p)) for p in feet]
             method, err_px = PositionMethod.TRACKED, implied_tracking_error_px(elapsed, diag)
-        err_m = None
-        if err_px is not None:
-            ms = [_metres_for_pixels(calibration, to_anchor(p), err_px) for p in feet if p is not None]
-            ms = [m for m in ms if m is not None]
-            err_m = max(ms) if ms else None
         left, right = mapped
         extrapolated = any(p is not None and calibration.homography.is_extrapolated(p) for p in mapped)
         out.append(ContactCourtPosition(i, contact, Availability.AVAILABLE, None, method, direction, elapsed,
-                                        left, right, extrapolated, err_px, err_m))
+                                        left, right, extrapolated,
+                                        **_combined_uncertainty(calibration, loo, feet, mapped, err_px, to_anchor,
+                                                                extrapolated)))
     return out
+
+
+def _combined_uncertainty(calibration, loo, feet_px, feet_court, err_px, to_anchor, extrapolated) -> dict:
+    """Per foot: calibration error (leave-one-out, interpolated at that court
+    position) + tracking error (the pixel envelope converted to metres at
+    that spot), straight sum. Reports the foot with the larger total, and its
+    components, so the +/- shown is the less certain foot's."""
+    best = None
+    for px, court in zip(feet_px, feet_court):
+        if px is None or court is None:
+            continue
+        trk_m = 0.0
+        if err_px is not None:
+            trk_m = _metres_for_pixels(calibration, to_anchor(px), err_px)
+            if trk_m is None:
+                continue
+        cal = None if loo is None else calibration_error_at(court, loo)
+        total = None if cal is None else cal.error_m + trk_m
+        key = -1.0 if total is None else total
+        if best is None or key > best[0]:
+            best = (key, total, cal, trk_m)
+    if best is None:
+        return dict(uncertainty_m=None, uncertainty_note="no foot position could be mapped", calibration_error_m=None,
+                    calibration_error_basis=None, tracking_error_px=err_px, tracking_error_m=None)
+    _key, total, cal, trk_m = best
+    if cal is None:
+        note = ("calibration error unknown: it has fewer than 5 points, so leave-one-out can't run; the tracking error "
+                "alone is NOT the uncertainty")
+    else:
+        note = (("calibration + tracking error, straight sum." if err_px is not None else
+                 "calibration error only (static camera, no tracking); camera drift below ~1% of the frame diagonal is "
+                 "undetectable by the motion check and not included.")
+                + (" Position is outside the clicked points (extrapolated), where the interpolated calibration error "
+                   "may understate the true error." if extrapolated else ""))
+    return dict(uncertainty_m=total, uncertainty_note=note,
+                calibration_error_m=None if cal is None else cal.error_m,
+                calibration_error_basis=None if cal is None else cal.basis,
+                tracking_error_px=err_px, tracking_error_m=trk_m if err_px is not None else None)
 
 
 def movement_trail(frames: Sequence[LandmarkFrame], calibration: CourtCalibration,

@@ -121,6 +121,29 @@ class LeaveOneOutTests(unittest.TestCase):
         self.assertEqual(worst.name, "front_right_corner")
 
 
+class CalibrationErrorAtTests(unittest.TestCase):
+    def _loo(self, errors):
+        from engine.calibration.court_homography import LeaveOneOutResult
+
+        return [LeaveOneOutResult(n, xy, (0, 0), None, None, None, e, False) for n, (xy, e) in errors.items()]
+
+    def test_exact_at_a_point_and_weighted_between(self) -> None:
+        from engine.calibration.court_homography import calibration_error_at
+
+        loo = self._loo({"a": ((0.0, 0.0), 1.0), "b": ((4.0, 0.0), 0.2), "c": ((0.0, 4.0), None)})
+        self.assertAlmostEqual(calibration_error_at((0.0, 0.0), loo).error_m, 1.0)
+        mid = calibration_error_at((2.0, 0.0), loo)
+        self.assertAlmostEqual(mid.error_m, 0.6)  # equidistant -> mean; the None point is ignored
+        near_b = calibration_error_at((3.5, 0.0), loo)
+        self.assertLess(near_b.error_m, 0.3)
+        self.assertEqual(near_b.nearest_point, "b")
+
+    def test_none_when_nothing_to_interpolate(self) -> None:
+        from engine.calibration.court_homography import calibration_error_at
+
+        self.assertIsNone(calibration_error_at((1.0, 1.0), self._loo({"a": ((0.0, 0.0), None)})))
+
+
 class CalibrationJsonAndFeetTests(unittest.TestCase):
     def _json(self, names):
         img, _court = synthetic(names)

@@ -25,7 +25,11 @@ sys.path.insert(0, REPO_ROOT)
 from engine.api.interfaces import AnalysisRequest  # noqa: E402
 from engine.calibration.camera_motion import classify_camera_motion, measure_camera_motion  # noqa: E402
 from engine.calibration.court_capabilities import contact_court_positions, movement_trail  # noqa: E402
-from engine.calibration.court_homography import CourtCalibration  # noqa: E402
+from engine.calibration.court_homography import (  # noqa: E402
+    CourtCalibration,
+    calibration_error_at,
+    calibration_leave_one_out,
+)
 from engine.calibration.floor_tracking import player_boxes_from_frames  # noqa: E402
 from engine.phases.analysis_result_builder import build_analysis_result  # noqa: E402
 from engine.phases.phase_detector import KinematicPhaseDetector  # noqa: E402
@@ -48,6 +52,23 @@ def _plain(v):
     return v
 
 
+def _m(v):
+    return "unknown" if v is None else f"{v:.2f} m"
+
+
+# Reference spots for showing how the calibration's own error varies across
+# the court -- where a position *would* be uncertain, whether or not a player
+# stood there in this clip.
+REFERENCE_SPOTS = {
+    "front-left corner area": (0.5, 0.5),
+    "front-right corner area": (5.9, 0.5),
+    "T": (3.2, 5.415),
+    "behind left service box": (1.0, 7.8),
+    "behind right service box": (5.4, 7.8),
+    "back-centre": (3.2, 9.0),
+}
+
+
 def main() -> int:
     report = {}
     for path in sorted(glob.glob(os.path.join(REPO_ROOT, "calibrations", "*.json"))):
@@ -66,7 +87,14 @@ def main() -> int:
         per_swing = contact_court_positions(video, frames, contacts, cal, data["frame_index"], camera,
                                             player_boxes=player_boxes_from_frames(frames))
         trail = movement_trail(frames, cal, camera, None if motion is None else motion.max_drift_pct)
+        loo = calibration_leave_one_out(cal)
+        spots = {}
+        for label, xy in REFERENCE_SPOTS.items():
+            est = None if loo is None else calibration_error_at(xy, loo)
+            spots[label] = {"court_xy_m": list(xy), "calibration_error_m": None if est is None else round(est.error_m, 3),
+                            "extrapolated": cal.homography.is_extrapolated(xy), "basis": None if est is None else est.basis}
         report[data["clip_id"]] = {
+            "calibration_error_at_reference_spots": spots,
             "calibration_frame": data["frame_index"],
             "camera": camera.value,
             "camera_drift_pct": None if motion is None else round(motion.max_drift_pct, 2),
@@ -79,10 +107,13 @@ def main() -> int:
             if p.availability.value == "available":
                 print(f"   swing {p.swing_index} contact f{p.contact_frame}: {p.direction} {p.elapsed_ms / 1000:.2f}s  "
                       f"L={p.left_foot_m and tuple(round(c, 2) for c in p.left_foot_m)} R={p.right_foot_m and tuple(round(c, 2) for c in p.right_foot_m)}  "
-                      f"+/-{p.implied_tracking_error_px:.1f}px (~{p.implied_tracking_error_m and round(p.implied_tracking_error_m, 2)} m)"
+                      f"+/-{_m(p.uncertainty_m)} (calibration {_m(p.calibration_error_m)} + tracking {_m(p.tracking_error_m)})"
                       f"{' EXTRAPOLATED' if p.extrapolated else ''}")
             else:
                 print(f"   swing {p.swing_index} contact f{p.contact_frame}: UNAVAILABLE -- {p.reason}")
+        print("   calibration error at reference spots (interpolated from leave-one-out):")
+        for label, v in spots.items():
+            print(f"     {label:26s} {_m(v['calibration_error_m'])}{'  (extrapolated)' if v['extrapolated'] else ''}  [{v['basis']}]")
         print(f"   movement trail: {trail.availability.value}{' -- ' + trail.reason if trail.reason else ''}")
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)

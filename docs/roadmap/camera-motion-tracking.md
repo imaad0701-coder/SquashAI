@@ -18,7 +18,7 @@ Continuous tracking of the whole clip, with drift correction, is **not** in this
   - Fits a RANSAC homography per step between frames, in either direction from the anchor. Backward decoding works in chunks.
   - **Stops at the first gap.** Nothing past a gap is returned.
 - **`engine/calibration/court_capabilities.py`,** the practical split:
-  - **Per swing** (`contact_court_positions`): available within **5 s** of the anchor in either direction on a moving camera. Each result carries the direction, the real elapsed time and the implied tracking error in pixels and metres at the feet. Beyond 5 s, or past a tracking gap, the result is unavailable with the reason. A static camera maps directly at any distance.
+  - **Per swing** (`contact_court_positions`): available within **5 s** of the anchor in either direction on a moving camera. Each result carries the direction, the real elapsed time and a **combined uncertainty**: the calibration's own error (leave-one-out, interpolated at the foot position) plus tracking error, straight sum. The components are reported alongside, and the ± is unknown, not tracking-only, when the calibration's error can't be estimated. Beyond 5 s, or past a tracking gap, the result is unavailable with the reason. A static camera maps directly at any distance, with calibration error only.
   - **Whole clip** (`movement_trail`): available **only on a static camera**, as classified by the camera-motion check. On a moving or unmeasurable camera it is unavailable, with a message saying why.
 - **`engine/calibration/camera_motion.py`:** the camera-motion measurement and its classification (static, moving or unknown). It moved here from the demo so the engine can gate on it; the demo pre-flight check re-exports it.
 
@@ -32,12 +32,22 @@ Continuous tracking of the whole clip, with drift correction, is **not** in this
 - **The 5 s horizon and the error envelope are provisional,** taken from these two clips. Every reading within 5 s fell inside 0.3% + 0.05% per second of the frame diagonal.
 - **No tracking gaps occurred** on either clip, which both have wood-grain floors. Backward reached frame 0 with at least 68 inliers. What a gap costs on real footage is still unmeasured.
 
-On the real clips, `tools/court_capability_report.py` gives positions for 3 of 4 detected swings on backhand3 and 3 of 6 on forehand1. The rest are unavailable as beyond the horizon, and the movement trail is unavailable on both.
+On the real clips (`tools/court_capability_report.py`):
+
+| Clip | Swings with positions | Elapsed from anchor | **± combined** | of which calibration / tracking |
+|---|---|---|---|---|
+| backhand3 | 3 of 4 | 1.9–3.6 s | **0.13–0.14 m** | 0.09–0.10 m / 0.03–0.04 m |
+| forehand1 | 3 of 6 | 0.6–4.3 s | **0.14–0.17 m** | 0.09 m / 0.04–0.08 m |
+
+The other swings are unavailable because they're beyond the horizon, and the movement trail is unavailable on both clips.
+
+**The calibration dominates the uncertainty, and it's very uneven across the court.** These positions are all behind the service boxes, where calibration error is about 0.1 m. Near the front corners it is 0.59 m and 1.69 m on backhand3, and 0.50 m at forehand1's front-right corner. So a position near a corner would be roughly ten times less precise than these.
+
+Interpolated calibration error also **understates** the error far from every clicked point: forehand1 has no clicked point on the left side of the court at all. The output shows each estimate's nearest-point distance so this stays visible.
 
 ## Caveats carried by every per-swing position
 
-- The implied error is **tracking error only**. It doesn't include the calibration's own error.
-- On this rear-wall footage every foot position is also **extrapolated**, because the players stand nearer the camera than any clickable court point. The real uncertainty is therefore larger than the ± figure (see `court-calibration`).
+- The ± is calibration plus tracking error, but the calibration part is an *interpolated* estimate. On this rear-wall footage every foot position is **extrapolated**, because players stand nearer the camera than any clickable court point. The estimate is most trustworthy near clicked points (real feet sit 1.0–1.3 m from the nearest one) and understates the error far from all of them.
 - The evidence is two clips. The horizon and the envelope need re-checking on more footage.
 
 ## Validation bar for v1

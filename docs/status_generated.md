@@ -42,9 +42,9 @@ Everything on this page is computed from the current code and test run, not hand
 | `engine/feedback/coach.py` | 13 | `Coach.generate_feedback()` | - | - |
 | `engine/feedback/recommendations.py` | 11 | - | `RecommendationRule.apply()` | - |
 | `engine/calibration/camera_motion.py` | 145 | - | - | `CameraMotionStatus`, `CameraMotion` |
-| `engine/calibration/court_capabilities.py` | 205 | - | - | `Availability`, `PositionMethod`, `ContactCourtPosition`, `MovementTrail` |
+| `engine/calibration/court_capabilities.py` | 257 | - | - | `Availability`, `PositionMethod`, `ContactCourtPosition`, `MovementTrail` |
 | `engine/calibration/court_geometry.py` | 69 | - | - | - |
-| `engine/calibration/court_homography.py` | 285 | - | - | `CalibrationError`, `CourtHomography`, `LeaveOneOutResult`, `CourtCalibration`, `FootCourtPosition` |
+| `engine/calibration/court_homography.py` | 343 | - | - | `CalibrationError`, `CourtHomography`, `LeaveOneOutResult`, `CourtCalibration`, `CalibrationErrorEstimate`, `FootCourtPosition` |
 | `engine/calibration/floor_tracking.py` | 172 | - | - | `TrackStep`, `FloorTrack` |
 | `engine/calibration/interfaces.py` | 29 | - | `CalibrationProvider.load()`, `CalibrationProvider.pixel_to_world()` | `CameraIntrinsics`, `CalibrationConfig` |
 | `engine/persistence/interfaces.py` | 35 | - | `LandmarkRepository.save()`, `LandmarkRepository.load()`, `MetricsRepository.save()`, `MetricsRepository.load()`, `ReportRepository.save()`, `ReportRepository.load()` | `StorageConfig` |
@@ -53,7 +53,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 439
+- tests run: 443
 - failures: 0
 - errors: 0
 - skipped: 2
