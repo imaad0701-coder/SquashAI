@@ -72,6 +72,18 @@ def peak_not_at_edge_gate(peak_position: int, window_length: int, gate: str) -> 
                      required="interior", passed=not at_edge)
 
 
+def racket_side_agreement_gate(supplied: str, phase_detector_side: str | None) -> GateCheck:
+    """The phase detector picks its contact frames from whichever wrist moves
+    fastest (infer_racket_side); racket-side findings measure the supplied
+    racket side. If the two differ, racket-side metrics would be sampled on
+    one arm at contact frames found on the other -- suppress rather than
+    guess which one is wrong."""
+    observed = phase_detector_side or "unknown"
+    return GateCheck(gate="racket_side_agrees_with_phase_detection", observed=f"phase detector used {observed} wrist",
+                     comparator="==", required=f"supplied racket side {supplied}",
+                     passed=phase_detector_side == supplied)
+
+
 def boundary_detected_gate(boundary: PhaseBoundary, gate: str) -> GateCheck:
     observed = boundary.derivation_method.value
     return GateCheck(gate=gate, observed=observed, comparator="==", required=DerivationMethod.DETECTED.value,

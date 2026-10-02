@@ -114,6 +114,12 @@ def _result(*contacts: int, backswings: dict | None = None) -> AnalysisResult:
                           swings=tuple(_swing(c, backswings.get(i)) for i, c in enumerate(contacts)))
 
 
+def _evaluate(debug_report: dict, result: AnalysisResult, phase_racket_side: str = "right"):
+    # FakeClip frames carry no landmarks, so the phase detector's side is
+    # passed explicitly instead of being inferred.
+    return evaluate_findings(debug_report, result, phase_racket_side=phase_racket_side)
+
+
 def _finding(report, rule_id: str):
     return next(f for f in report.findings if f.rule_id == rule_id)
 
@@ -161,7 +167,7 @@ class ConsistencyTests(unittest.TestCase):
         clip = FakeClip()
         for frame, value in zip(CONTACTS, (90.0, 100.0, 110.0)):
             clip.set_angle("elbow_right", frame, value)
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
         self.assertIs(f.outcome, FindingOutcome.REPORTED)
         self.assertEqual(f.value.repetitions, 3)
         self.assertAlmostEqual(f.value.mean, 100.0)
@@ -169,18 +175,18 @@ class ConsistencyTests(unittest.TestCase):
         self.assertEqual(f.value.per_swing, ((0, 90.0), (1, 100.0), (2, 110.0)))
 
     def test_fewer_than_three_swings_is_not_applicable(self) -> None:
-        report = evaluate_findings(FakeClip().debug_report(), _result(40, 90))
+        report = _evaluate(FakeClip().debug_report(), _result(40, 90))
         for f in report.findings:
             self.assertIs(f.outcome, FindingOutcome.NOT_APPLICABLE, f.rule_id)
             self.assertIsNone(f.value)
 
     def test_swing_without_contact_does_not_count_as_a_repetition(self) -> None:
         result = AnalysisResult(contact_rule=ContactRule.PEAK_SPEED, swings=(_swing(40), _swing(90), _swing(None)))
-        f = _finding(evaluate_findings(FakeClip().debug_report(), result), "consistency.trunk_inclination_at_contact")
+        f = _finding(_evaluate(FakeClip().debug_report(), result), "consistency.trunk_inclination_at_contact")
         self.assertIs(f.outcome, FindingOutcome.NOT_APPLICABLE)
 
     def test_racket_side_rules_need_handedness_midline_rules_do_not(self) -> None:
-        report = evaluate_findings(FakeClip(racket_side=None).debug_report(), _result(*CONTACTS))
+        report = _evaluate(FakeClip(racket_side=None).debug_report(), _result(*CONTACTS))
         self.assertIs(_finding(report, "consistency.elbow_angle_at_contact").outcome, FindingOutcome.NOT_APPLICABLE)
         self.assertIn("handedness_not_supplied", _finding(report, "consistency.elbow_angle_at_contact").not_applicable_reason)
         self.assertIs(_finding(report, "consistency.trunk_inclination_at_contact").outcome, FindingOutcome.REPORTED)
@@ -190,7 +196,7 @@ class ConsistencyTests(unittest.TestCase):
     def test_invalid_sample_excludes_swing_and_suppresses_below_bar(self) -> None:
         clip = FakeClip()
         clip.set_angle("elbow_right", 90, None, valid=False)
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
         self.assertIs(f.outcome, FindingOutcome.SUPPRESSED)
         self.assertIsNone(f.value)
         (gate,) = f.gate_failures
@@ -202,12 +208,12 @@ class ConsistencyTests(unittest.TestCase):
     def test_low_confidence_sample_is_excluded_with_observed_value(self) -> None:
         clip = FakeClip()
         clip.set_angle("elbow_right", 40, 95.0, confidence=0.3)
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "consistency.elbow_angle_at_contact")
         (excl,) = f.swing_exclusions
         self.assertEqual((excl.check.gate, excl.check.observed, excl.check.required), ("sample_confidence", 0.3, 0.5))
 
     def test_noise_floor_only_for_series_with_confidence(self) -> None:
-        report = evaluate_findings(FakeClip().debug_report(), _result(*CONTACTS))
+        report = _evaluate(FakeClip().debug_report(), _result(*CONTACTS))
         head = _finding(report, "consistency.head_displacement_at_contact")
         self.assertIs(head.outcome, FindingOutcome.REPORTED)
         self.assertIsNone(head.value.noise_floor)
@@ -218,9 +224,36 @@ class ConsistencyTests(unittest.TestCase):
 
     def test_reported_finding_carries_no_verdict_label(self) -> None:
         fields = {f.name for f in dataclasses.fields(
-            _finding(evaluate_findings(FakeClip().debug_report(), _result(*CONTACTS)),
+            _finding(_evaluate(FakeClip().debug_report(), _result(*CONTACTS)),
                      "consistency.trunk_inclination_at_contact").value)}
         self.assertFalse({"label", "verdict", "is_consistent", "consistent"} & fields)
+
+
+class RacketSideAgreementTests(unittest.TestCase):
+    def test_supplied_side_disagreeing_with_phase_detector_suppresses_racket_side_rules(self) -> None:
+        report = _evaluate(FakeClip(racket_side="right").debug_report(), _result(*CONTACTS), phase_racket_side="left")
+        self.assertEqual(report.phase_racket_side, "left")
+        for rule_id in ("consistency.elbow_angle_at_contact", "consistency.peak_elbow_angular_velocity",
+                        "sequencing.elbow_wrist_peak_order.contact_anchored"):
+            f = _finding(report, rule_id)
+            self.assertIs(f.outcome, FindingOutcome.SUPPRESSED, rule_id)
+            self.assertIsNone(f.value)
+            (gate,) = f.gate_failures
+            self.assertEqual(gate.gate, "racket_side_agrees_with_phase_detection")
+            self.assertEqual((gate.observed, gate.required),
+                             ("phase detector used left wrist", "supplied racket side right"))
+        # Midline and left/right rules don't depend on which side is the racket side.
+        self.assertIs(_finding(report, "consistency.trunk_inclination_at_contact").outcome, FindingOutcome.REPORTED)
+        self.assertIs(_finding(report, "asymmetry.knee_angle_at_contact").outcome, FindingOutcome.REPORTED)
+
+    def test_no_handedness_stays_not_applicable_never_inferred(self) -> None:
+        report = _evaluate(FakeClip(racket_side=None).debug_report(), _result(*CONTACTS), phase_racket_side="left")
+        self.assertIsNone(report.racket_side)
+        self.assertIs(_finding(report, "consistency.elbow_angle_at_contact").outcome, FindingOutcome.NOT_APPLICABLE)
+
+    def test_too_few_repetitions_outranks_side_mismatch(self) -> None:
+        report = _evaluate(FakeClip(racket_side="right").debug_report(), _result(40, 90), phase_racket_side="left")
+        self.assertIs(_finding(report, "consistency.elbow_angle_at_contact").outcome, FindingOutcome.NOT_APPLICABLE)
 
 
 class PeakWindowGateTests(unittest.TestCase):
@@ -230,7 +263,7 @@ class PeakWindowGateTests(unittest.TestCase):
             clip.ang_vel["elbow_right"][c] = 500.0
         # Swing 0: make the window's last sample the maximum (window ends contact + 150ms = +4 frames at 30fps).
         clip.ang_vel["elbow_right"][40 + 4] = 900.0
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "consistency.peak_elbow_angular_velocity")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "consistency.peak_elbow_angular_velocity")
         self.assertIs(f.outcome, FindingOutcome.SUPPRESSED)
         self.assertEqual([(e.swing_index, e.check.gate, e.check.observed) for e in f.swing_exclusions],
                          [(0, "peak_position", "window_edge")])
@@ -249,7 +282,7 @@ class PeakWindowGateTests(unittest.TestCase):
             clip.ang_vel["elbow_right"][c] = 500.0
         for i in range(80, 89):  # 9 frames invalid inside swing 1's window, before its contact peak
             clip.ang_vel_valid["elbow_right"][i] = False
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "consistency.peak_elbow_angular_velocity")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "consistency.peak_elbow_angular_velocity")
         (excl,) = f.swing_exclusions
         self.assertEqual((excl.swing_index, excl.check.gate, excl.check.observed, excl.check.required),
                          (1, "window_longest_invalid_run_frames", 9, 7))
@@ -261,7 +294,7 @@ class AsymmetryTests(unittest.TestCase):
         for c, (lv, rv) in zip(CONTACTS, ((100.0, 90.0), (104.0, 90.0), (96.0, 92.0))):
             clip.set_angle("knee_left", c, lv)
             clip.set_angle("knee_right", c, rv)
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "asymmetry.knee_angle_at_contact")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "asymmetry.knee_angle_at_contact")
         self.assertIs(f.outcome, FindingOutcome.REPORTED)
         self.assertAlmostEqual(f.value.left_mean, 100.0)
         self.assertAlmostEqual(f.value.right_mean, 272.0 / 3)
@@ -272,7 +305,7 @@ class AsymmetryTests(unittest.TestCase):
     def test_either_side_invalid_excludes_the_pair(self) -> None:
         clip = FakeClip()
         clip.set_angle("hip_right", 140, None, valid=False)
-        f = _finding(evaluate_findings(clip.debug_report(), _result(*CONTACTS)), "asymmetry.hip_angle_at_contact")
+        f = _finding(_evaluate(clip.debug_report(), _result(*CONTACTS)), "asymmetry.hip_angle_at_contact")
         self.assertIs(f.outcome, FindingOutcome.SUPPRESSED)
         self.assertEqual([(e.swing_index, e.check.gate) for e in f.swing_exclusions], [(2, "right_sample_valid")])
 
@@ -286,7 +319,7 @@ class SequencingTests(unittest.TestCase):
         return clip
 
     def test_elbow_before_wrist_lag_in_ms(self) -> None:
-        f = _finding(evaluate_findings(self._clip_with_peaks(-2).debug_report(), _result(*CONTACTS)),
+        f = _finding(_evaluate(self._clip_with_peaks(-2).debug_report(), _result(*CONTACTS)),
                      "sequencing.elbow_wrist_peak_order.contact_anchored")
         self.assertIs(f.outcome, FindingOutcome.REPORTED)
         self.assertEqual((f.value.proximal_first_count, f.value.distal_first_count, f.value.same_frame_count), (3, 0, 0))
@@ -295,7 +328,7 @@ class SequencingTests(unittest.TestCase):
 
     def test_backswing_anchor_requires_detected_unwidened_boundary(self) -> None:
         backswings = {0: _boundary(28, DerivationMethod.ARCHITECTURAL), 1: _boundary(78, widened=True)}
-        f = _finding(evaluate_findings(self._clip_with_peaks(-2).debug_report(), _result(*CONTACTS, backswings=backswings)),
+        f = _finding(_evaluate(self._clip_with_peaks(-2).debug_report(), _result(*CONTACTS, backswings=backswings)),
                      "sequencing.elbow_wrist_peak_order.backswing_anchored")
         self.assertIs(f.outcome, FindingOutcome.SUPPRESSED)
         self.assertEqual(

@@ -128,6 +128,10 @@ class Finding:
 class FindingsReport:
     rule_set_version: str
     swing_count: int  # swings in the AnalysisResult, with or without a contact frame
-    racket_side: str | None
+    racket_side: str | None  # from the supplied handedness only; None when not supplied
     ms_per_frame: float | None
     findings: tuple[Finding, ...]
+    # The wrist the phase detector actually used to find contact frames
+    # (engine.phases.contact_detection.infer_racket_side over the same frames).
+    # Racket-side findings are suppressed when it disagrees with racket_side.
+    phase_racket_side: str | None = None

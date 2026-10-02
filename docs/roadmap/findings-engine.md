@@ -46,11 +46,17 @@ The findings engine lives in `engine/types/findings.py` and `engine/scoring/{gat
 ## Open questions
 
 - Sequencing under the `PEAK_SPEED` contact rule is partly circular. Contact is defined as the wrist-speed peak, so the wrist peak usually sits on the contact frame. The rule then mostly measures when the elbow peak lands relative to contact.
+- Head displacement is normalized by *projected* shoulder width, which narrows as the player turns side-on. A rotated trunk inflates the ratio. It isn't raw pixels, but it isn't rotation-invariant either.
+- `infer_racket_side` itself defaults to the right wrist on ties or all-invalid data, so agreement with a supplied "right" is weaker evidence than agreement with "left".
 - Asymmetry between the racket arm and the off arm is large by nature. The numbers are reported as facts, and what counts as meaningful is for a later layer to decide, with evidence.
 
 ## Evidence so far
 
-v1 run over the 6 labelled clips on 2026-10-02 (handedness=right was assumed for the racket-side rules; `infer_racket_side` disagrees on sample_backhand1):
+v1 run over the 6 labelled clips on 2026-10-02. The labels don't record handedness, so handedness=right was *supplied* for this run. The engine itself never assumes a side: racket-side rules use supplied handedness only, and are not applicable without it. They are also suppressed whenever the supplied side disagrees with the wrist the phase detector used for contacts (`infer_racket_side`).
+
+Under handedness=right, only sample_backhand1 disagrees (the detector used the left wrist), and every rule there is not applicable anyway (2 swings), so no reported finding changed when this gate was added. Supplying handedness=left on the four clips with at least 3 swings suppresses all 5 racket-side rules on each.
+
+Per-clip results:
 - **sample_backhand1 and sample_backhand2:** 2 swings each, so every rule is not applicable.
 - **sample_backhand3:** 4 swings. 12 reported, 1 suppressed (backswing-anchored sequencing, peaks at the window edge).
 - **sample_forehand1:** 6 swings. 13/13 reported.

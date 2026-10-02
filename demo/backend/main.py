@@ -17,9 +17,15 @@ POST /api/analyze takes a video (+ shot_type, + optional handedness) and:
      rule's REPORTED / SUPPRESSED / NOT_APPLICABLE outcome. Skipped (null,
      with "findings_error") when phases are unavailable.
 
-"states" lists which of the six honest outcome states apply, so the UI
-never has to infer them: upload_rejected, quality_warned, pipeline_failed,
-phases_unavailable, all_findings_suppressed, low_overall_confidence.
+"states" lists which honest outcome states apply, so the UI never has to
+infer them: upload_rejected, quality_warned, pipeline_failed,
+phases_unavailable, low_overall_confidence, and -- when no finding was
+reported -- exactly one of all_findings_suppressed (every finding failed a
+trust gate), all_findings_not_applicable (every finding lacked a
+precondition, e.g. too few repetitions) or no_findings_reported_mixed.
+"recommended_actions" maps each recorded gate/precondition reason to what
+the user can do about it (re-film vs film more repetitions vs set
+handedness).
 
 The uploaded video is written to a temp file only while it's processed and
 deleted in a `finally`. Session history (GET /api/history, /api/history/{id})
@@ -113,6 +119,65 @@ def _tracking_coverage(debug_report: dict) -> float | None:
             total += 1
             good += bool(m.is_valid and m.confidence >= MIN_LANDMARK_VISIBILITY)
     return good / total if total else None
+
+
+def _no_findings_state(findings: dict | None) -> str | None:
+    """When nothing was reported, say which kind of nothing: every finding
+    failed a trust gate, every finding lacked a precondition, or a mix."""
+    if findings is None:
+        return None
+    outcomes = {f["outcome"] for f in findings["findings"]}
+    if FindingOutcome.REPORTED.value in outcomes or not outcomes:
+        return None
+    if outcomes == {FindingOutcome.SUPPRESSED.value}:
+        return "all_findings_suppressed"
+    if outcomes == {FindingOutcome.NOT_APPLICABLE.value}:
+        return "all_findings_not_applicable"
+    return "no_findings_reported_mixed"
+
+
+# Gate / precondition -> what the user can actually do about it. Keyed on the
+# engine's own gate names and not-applicable reason prefixes, so the advice
+# follows from the recorded reason rather than from a guess.
+_GATE_ACTIONS = {
+    "sample_valid": "Re-film with a clearer view of the whole body: keep both arms and legs in frame and unobstructed, with good light.",
+    "sample_confidence": "Re-film with a clearer view of the whole body: keep both arms and legs in frame and unobstructed, with good light.",
+    "window_longest_invalid_run_frames": "Re-film with a clearer view of the whole body: keep both arms and legs in frame and unobstructed, with good light.",
+    "window_has_valid_sample": "Re-film with a clearer view of the whole body: keep both arms and legs in frame and unobstructed, with good light.",
+    "peak_position": "Peak timing could not be located inside the swing window; a steadier camera angle side-on to the swing may help.",
+    "backswing_derivation": "The backswing start was not detected cleanly; a camera angle that shows the full backswing may help.",
+    "backswing_search_range_widened": "The backswing start was not detected cleanly; a camera angle that shows the full backswing may help.",
+    "backswing_frame_present": "The backswing start was not detected cleanly; a camera angle that shows the full backswing may help.",
+    "racket_side_agrees_with_phase_detection": "Check the handedness setting: the swing detector found the faster-moving wrist on the other side.",
+}
+_NA_ACTIONS = {
+    "fewer_than_min_repetitions": "Film more repetitions of this swing: findings need at least 3 swings with a detected contact in one clip.",
+    "handedness_not_supplied": "Set handedness to evaluate the racket-side findings.",
+}
+
+
+def _recommended_actions(findings: dict | None) -> list[str]:
+    if findings is None:
+        return []
+    actions: list[str] = []
+    for f in findings["findings"]:
+        if f["outcome"] == FindingOutcome.SUPPRESSED.value:
+            gate_names = [g["gate"] for g in f["gate_failures"]] + [e["check"]["gate"] for e in f["swing_exclusions"]]
+            keys = [name.removeprefix("left_").removeprefix("right_").removeprefix("elbow_").removeprefix("wrist_")
+                    for name in gate_names]
+            candidates = [_GATE_ACTIONS[k] for k in keys if k in _GATE_ACTIONS]
+        elif f["outcome"] == FindingOutcome.NOT_APPLICABLE.value:
+            prefix = (f["not_applicable_reason"] or "").split(":")[0]
+            candidates = [_NA_ACTIONS[prefix]] if prefix in _NA_ACTIONS else []
+        else:
+            candidates = []
+        for action in candidates:
+            if action not in actions:
+                actions.append(action)
+    # Too few repetitions blocks every rule, so it leads: fixing anything else
+    # first would still produce no findings.
+    reps = _NA_ACTIONS["fewer_than_min_repetitions"]
+    return sorted(actions, key=lambda a: a != reps)
 
 
 def _preflight_json(result: preflight.PreflightResult, extra: tuple[preflight.Check, ...] = ()) -> dict:
@@ -218,8 +283,9 @@ def analyze(
             states.append("quality_warned")
         if phases is None:
             states.append("phases_unavailable")
-        if findings is not None and not any(f["outcome"] == FindingOutcome.REPORTED.value for f in findings["findings"]):
-            states.append("all_findings_suppressed")
+        no_findings_state = _no_findings_state(findings)
+        if no_findings_state:
+            states.append(no_findings_state)
         if coverage is not None and coverage < LOW_CONFIDENCE_COVERAGE:
             states.append("low_overall_confidence")
 
@@ -231,6 +297,7 @@ def analyze(
             "phases_error": phases_error,
             "findings": findings,
             "findings_error": findings_error,
+            "recommended_actions": _recommended_actions(findings),
             "tracking_coverage": coverage,
             "low_confidence_threshold": LOW_CONFIDENCE_COVERAGE,
             "frame_count": len(debug_report["landmark_frames"]),

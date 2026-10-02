@@ -44,7 +44,7 @@ click "Run pipeline". A ~300-frame clip takes on the order of 30 seconds on CPU.
 
 ## Outcome states
 
-The backend returns a `states` list, and the page shows a distinct banner for each one:
+The backend returns a `states` list, and the page shows a distinct banner for each one. When nothing was reported, exactly one of the three no-findings states applies, and its banner lists `recommended_actions` derived from the recorded reasons (for example, re-film with a clearer view, film more repetitions, or set handedness):
 
 | State | Meaning |
 |---|---|
@@ -52,7 +52,9 @@ The backend returns a `states` list, and the page shows a distinct banner for ea
 | `quality_warned` | It was analysed, but the frame-rate or blur check warned. |
 | `pipeline_failed` | Tracking raised an error. |
 | `phases_unavailable` | Phase detection raised, so findings could not be evaluated. |
-| `all_findings_suppressed` | No finding was reported. The per-finding reasons are listed. |
+| `all_findings_suppressed` | No finding was reported, and every one failed a trust gate. Usually means re-filming with a clearer view. |
+| `all_findings_not_applicable` | No finding was reported, and none could be evaluated because a precondition was missing (usually fewer than 3 swings, or no handedness). Nothing failed a reliability check. |
+| `no_findings_reported_mixed` | No finding was reported. Some failed a trust gate and others lacked a precondition. |
 | `low_overall_confidence` | Under 50% of joint-angle samples are valid and above the visibility gate. The 50% figure is a display threshold, not a validated bar, and the number itself is shown. |
 
 ## What is stored

@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
 from engine.api.interfaces import AnalysisResult
+from engine.phases.contact_detection import infer_racket_side
 from engine.phases.frame_timing import ms_per_frame as measure_ms_per_frame
 from engine.phases.frame_timing import ms_to_frames
 from engine.scoring import gates
@@ -90,7 +91,8 @@ class _ClipView:
     """Index-aligned access to the debug_report series by frame_index (the
     unit AnalysisResult boundaries are expressed in)."""
 
-    def __init__(self, debug_report: Mapping[str, Any]) -> None:
+    def __init__(self, debug_report: Mapping[str, Any], phase_racket_side: str | None = None) -> None:
+        self.phase_racket_side = phase_racket_side
         self.frames = debug_report["landmark_frames"]
         self.angles = debug_report["angle_measurements"]
         self.kinematics = debug_report["kinematics"]
@@ -232,6 +234,15 @@ def _suppressed(rule_id: str, kind: FindingKind, description: str, unit: str, us
                    swing_exclusions=tuple(exclusions))
 
 
+def _racket_side_mismatch(rule_id: str, kind: FindingKind, description: str, unit: str,
+                          view: _ClipView) -> Finding | None:
+    check = gates.racket_side_agreement_gate(view.racket_side, view.phase_racket_side)
+    if check.passed:
+        return None
+    return Finding(rule_id=rule_id, kind=kind, outcome=FindingOutcome.SUPPRESSED, description=description,
+                   unit=unit, value=None, gate_failures=(check,))
+
+
 def _series_key(metric: MetricSpec, side: str | None) -> str | None:
     if metric.joint is None:
         return None
@@ -245,6 +256,8 @@ def evaluate_consistency(rule: ConsistencyRule, view: _ClipView, swings: tuple[S
     candidates = _contact_swings(view, swings)
     if len(candidates) < gates.MIN_REPETITIONS:
         return _not_applicable(rule.rule_id, kind, rule.description, metric.unit, _fewer_than_min_reps(len(candidates)))
+    if metric.sided and (mismatch := _racket_side_mismatch(rule.rule_id, kind, rule.description, metric.unit, view)):
+        return mismatch
 
     sampler = view.sampler(metric.series, _series_key(metric, view.racket_side))
     per_swing: list[tuple[int, float]] = []
@@ -323,6 +336,8 @@ def evaluate_sequencing(rule: SequencingRule, view: _ClipView, swings: tuple[Swi
     candidates = _contact_swings(view, swings)
     if len(candidates) < gates.MIN_REPETITIONS:
         return _not_applicable(rule.rule_id, kind, rule.description, unit, _fewer_than_min_reps(len(candidates)))
+    if mismatch := _racket_side_mismatch(rule.rule_id, kind, rule.description, unit, view):
+        return mismatch
 
     elbow = view.sampler(Series.ANGULAR_VELOCITY, f"elbow_{view.racket_side}")
     wrist = view.wrist_speed_sampler(view.racket_side)
@@ -367,10 +382,22 @@ def evaluate_sequencing(rule: SequencingRule, view: _ClipView, swings: tuple[Swi
                    unit=unit, value=value, swing_exclusions=tuple(exclusions))
 
 
-def evaluate_findings(debug_report: Mapping[str, Any], analysis_result: AnalysisResult) -> FindingsReport:
+def evaluate_findings(debug_report: Mapping[str, Any], analysis_result: AnalysisResult,
+                      phase_racket_side: str | None = None) -> FindingsReport:
     """debug_report: ShotPipeline.run_with_debug()'s second return value.
-    analysis_result: build_analysis_result() over the same landmark_frames."""
-    view = _ClipView(debug_report)
+    analysis_result: build_analysis_result() over the same landmark_frames.
+    phase_racket_side: the wrist side ("left"/"right") the phase detector used
+    to find contacts. Defaults to infer_racket_side over the same frames --
+    the exact call KinematicPhaseDetector.detect() and build_analysis_result
+    make -- so callers normally leave it out.
+
+    The racket side for racket-side rules always comes from the supplied
+    handedness (debug_report["racket_side"]), never from inference: with no
+    handedness those rules are NOT_APPLICABLE, and when the supplied side
+    disagrees with the phase detector's, they are SUPPRESSED."""
+    if phase_racket_side is None:
+        phase_racket_side = infer_racket_side(tuple(debug_report["landmark_frames"])).value.removesuffix("_wrist")
+    view = _ClipView(debug_report, phase_racket_side)
     swings = analysis_result.swings
     findings = (
         tuple(evaluate_consistency(rule, view, swings) for rule in CONSISTENCY_RULES)
@@ -378,4 +405,5 @@ def evaluate_findings(debug_report: Mapping[str, Any], analysis_result: Analysis
         + tuple(evaluate_sequencing(rule, view, swings) for rule in SEQUENCING_RULES)
     )
     return FindingsReport(rule_set_version=RULE_SET_VERSION, swing_count=len(swings),
-                          racket_side=view.racket_side, ms_per_frame=view.ms_per_frame, findings=findings)
+                          racket_side=view.racket_side, ms_per_frame=view.ms_per_frame, findings=findings,
+                          phase_racket_side=phase_racket_side)

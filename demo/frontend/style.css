@@ -150,6 +150,12 @@ tr.invalid td { color: var(--low); font-style: italic; }
   border-color: #5a606b; color: var(--text);
   background: repeating-linear-gradient(45deg, #1d2026, #1d2026 6px, #23262c 6px, #23262c 12px);
 }
+.state-all_findings_not_applicable { background: transparent; border-color: #5a606b; color: var(--text); }
+.state-no_findings_reported_mixed {
+  border-color: #5a606b; color: var(--text); border-style: dashed;
+  background: repeating-linear-gradient(45deg, #1d2026, #1d2026 6px, #20232a 6px, #20232a 12px);
+}
+.state-action-heading { margin-top: 8px; font-weight: 600; }
 .state-low_overall_confidence { background: #2a1d33; border-color: #7d55a0; color: #e6d3f5; }
 
 /* --- pre-flight table -------------------------------------------------------- */

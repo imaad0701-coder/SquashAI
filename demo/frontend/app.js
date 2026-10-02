@@ -125,7 +125,12 @@ const STATE_TEXT = {
   pipeline_failed: ["Pipeline failed", "The tracking pipeline raised an error on this clip."],
   quality_warned: ["Quality warning", "The clip was analysed, but a pre-flight check flagged something that can reduce reliability."],
   phases_unavailable: ["Phases unavailable", "Phase detection failed on this clip, so findings that need swings could not be evaluated."],
-  all_findings_suppressed: ["No findings reported", "Every finding was suppressed or not applicable. The reasons are listed per finding below."],
+  all_findings_suppressed: ["No findings reported: every finding failed a trust gate",
+    "The clip had enough swings, but the measurements needed did not pass the reliability checks (reasons per finding below)."],
+  all_findings_not_applicable: ["No findings reported: preconditions not met",
+    "Nothing failed a reliability check; the findings could not be evaluated at all (reasons per finding below)."],
+  no_findings_reported_mixed: ["No findings reported: some failed a trust gate, others lacked a precondition",
+    "See the reason on each finding below."],
   low_overall_confidence: ["Low overall tracking confidence", ""],
 };
 
@@ -157,6 +162,13 @@ function renderStates(data) {
         `choice, not a validated bar). Treat every number on this page with extra caution.`;
     }
     box.appendChild(el("span", "", detail));
+    const noFindingsStates = ["all_findings_suppressed", "all_findings_not_applicable", "no_findings_reported_mixed"];
+    if (noFindingsStates.includes(state) && (data.recommended_actions || []).length) {
+      box.appendChild(el("div", "state-action-heading", "What would help:"));
+      const ul = el("ul");
+      for (const action of data.recommended_actions) ul.appendChild(el("li", "", action));
+      box.appendChild(ul);
+    }
     if (state === "quality_warned" && data.preflight) {
       const ul = el("ul");
       for (const c of data.preflight.checks.filter((c) => c.status === "warn")) ul.appendChild(el("li", "", c.message));
