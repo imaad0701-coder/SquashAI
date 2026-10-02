@@ -10,6 +10,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }  /* element rules like #video { display: block } must not override it */
 
 body {
   background: var(--bg);
@@ -120,3 +121,69 @@ table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th { text-align: left; color: var(--muted); font-weight: 500; padding: 3px 4px; border-bottom: 1px solid var(--border); }
 td { padding: 3px 4px; border-bottom: 1px solid #23262c; }
 tr.invalid td { color: var(--low); font-style: italic; }
+
+/* --- layout: main column + session history -------------------------------- */
+#layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 20px; margin-top: 20px; align-items: start; }
+#layout #app { margin-top: 0; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.section-heading {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+  margin: 0 0 6px; font-weight: 500;
+}
+.section-heading span { text-transform: none; letter-spacing: normal; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+@media (max-width: 1000px) {
+  #layout, #app { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- outcome states: one distinct look per state ---------------------------- */
+#states { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.state { border-radius: 8px; padding: 10px 12px; font-size: 13px; border: 1px solid; }
+.state strong { display: block; margin-bottom: 2px; }
+.state ul { margin: 6px 0 0; padding-left: 18px; }
+.state-upload_rejected { background: #3a1416; border-color: #a33a3f; color: #ffc9cb; }
+.state-pipeline_failed { background: #3a1416; border-color: #a33a3f; color: #ffc9cb; border-style: double; border-width: 3px; }
+.state-quality_warned { background: #3a2c0c; border-color: #a77a1c; color: #ffe1a3; }
+.state-phases_unavailable { background: #22262d; border-color: #5a606b; color: var(--text); border-style: dashed; }
+.state-all_findings_suppressed {
+  border-color: #5a606b; color: var(--text);
+  background: repeating-linear-gradient(45deg, #1d2026, #1d2026 6px, #23262c 6px, #23262c 12px);
+}
+.state-low_overall_confidence { background: #2a1d33; border-color: #7d55a0; color: #e6d3f5; }
+
+/* --- pre-flight table -------------------------------------------------------- */
+#preflight-panel { margin-bottom: 14px; }
+.pf-pass { color: var(--ok); }
+.pf-warn { color: #ffb84d; font-weight: 600; }
+.pf-reject { color: #ff7b80; font-weight: 600; }
+.pf-skipped { color: var(--low); font-style: italic; }
+
+/* --- findings: reported (solid) / suppressed (dimmed + hatched) / n/a (outline) */
+#findings-panel { margin-top: 18px; }
+.finding-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 10px; }
+.fk::before { content: ""; display: inline-block; width: 12px; height: 10px; margin-right: 5px; border-radius: 2px; vertical-align: middle; }
+.fk-reported::before { background: var(--accent); }
+.fk-suppressed::before { background: repeating-linear-gradient(45deg, #5a606b, #5a606b 2px, #2a2e35 2px, #2a2e35 4px); }
+.fk-na::before { border: 1px solid var(--muted); }
+.finding-group h4 { font-size: 12px; color: var(--muted); margin: 12px 0 6px; font-weight: 500; }
+.finding { border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 12.5px; }
+.finding .f-title { font-weight: 600; }
+.finding .f-id { color: var(--muted); font-size: 11px; font-family: ui-monospace, Consolas, monospace; }
+.finding .f-facts { margin: 4px 0 0; padding-left: 16px; }
+.finding-reported { background: #16263a; border: 1px solid var(--accent); }
+.finding-suppressed {
+  opacity: 0.75; border: 1px solid #4a4f58; color: #c4c8ce;
+  background: repeating-linear-gradient(45deg, #1d2026, #1d2026 5px, #24272e 5px, #24272e 10px);
+}
+.finding-suppressed summary { cursor: pointer; }
+.finding-suppressed .f-reason { color: #e6e8eb; }
+.finding-na { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+/* --- history ----------------------------------------------------------------- */
+#history-list { list-style: none; margin: 8px 0 0; padding: 0; }
+#history-list li { padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid transparent; }
+#history-list li:hover, #history-list li.active { border-color: var(--border); background: #23262c; }
+#history-list .h-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#history-list .h-meta { color: var(--muted); font-size: 11px; }
+#video-unavailable { color: var(--muted); padding: 40px 16px; text-align: center; margin: 0; }

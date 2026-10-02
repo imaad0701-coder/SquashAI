@@ -2,22 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Squash AI engine -- preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squash AI engine -- demo</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-  <h1>Squash AI engine <span class="badge">PREVIEW / DEMO</span></h1>
+  <h1>Squash AI engine <span class="badge">DEMO</span></h1>
   <p class="subtitle">
-    Raw engine output only -- no scores, no coaching feedback. Phase boundaries are shown but are
-    explicitly unvalidated (see the legend below the timeline) -- forward_swing in particular is
-    known unreliable, not just untested. Nothing here is saved anywhere; closing this tab discards
-    everything.
+    Measured engine output: tracking, phase boundaries, and findings stated as plain numbers. No scores and no
+    coaching advice. Phase boundaries are unvalidated (see the legend under the timeline), and
+    forward_swing is known to be unreliable. Your video is deleted as soon as it has been processed. This
+    session keeps derived results only (not the video) for up to 20 analyses, in server memory until restart.
   </p>
 </header>
 
 <section id="upload-panel">
-  <input type="file" id="video-input" accept="video/*">
+  <input type="file" id="video-input" accept=".mp4,.mov,.avi,.mkv,video/*">
   <label>Shot type
     <select id="shot-type">
       <option value="forehand">Forehand</option>
@@ -35,46 +36,73 @@
   <span id="status"></span>
 </section>
 
-<main id="app" hidden>
-  <div id="video-panel">
-    <div class="video-wrap">
-      <video id="video" controls></video>
-      <canvas id="overlay"></canvas>
-    </div>
-    <p class="legend">
-      <span class="dot ok"></span> visibility &ge; <span id="threshold-label"></span> (confident)
-      &nbsp;&nbsp;
-      <span class="dot low"></span> below the visibility gate -- shown anyway, never hidden
-    </p>
+<div id="layout">
+  <div id="main-col">
+    <section id="states" hidden></section>
 
-    <div id="phase-timeline-wrap">
-      <h3 class="timeline-heading">Phase boundaries <span id="phase-contact-rule"></span></h3>
-      <canvas id="phase-timeline" height="54"></canvas>
-      <div id="phase-tooltip"></div>
-      <p class="legend phase-legend">
-        <span class="ph-key ph-detected"></span> detected (a real signal fired)
-        <span class="ph-key ph-architectural"></span> architectural (not measured -- fixed by construction)
-        <span class="ph-key ph-unreliable"></span> unreliable (forward_swing, always -- see docs/STATUS.md)
-        <span class="ph-key ph-widened"></span> search range widened by a removed neighbor window
-        <span class="ph-key ph-contact"></span> contact (separately evidenced, ~94% match rate)
-      </p>
-      <p id="phase-unavailable" class="legend" hidden>Phase detection unavailable for this clip<span id="phase-unavailable-reason"></span>.</p>
-    </div>
+    <section id="preflight-panel" class="panel" hidden>
+      <h3 class="section-heading">Upload checks <span class="muted" id="preflight-summary"></span></h3>
+      <table id="preflight-table"><thead><tr><th>check</th><th>result</th><th>observed</th><th>limit</th><th>note</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <main id="app" hidden>
+      <div id="video-panel">
+        <div class="video-wrap">
+          <video id="video" controls></video>
+          <canvas id="overlay"></canvas>
+          <p id="video-unavailable" hidden>Video not kept: history entries store derived results only.</p>
+        </div>
+        <p class="legend" id="skeleton-legend">
+          <span class="dot ok"></span> visibility &ge; <span id="threshold-label"></span> (confident)
+          &nbsp;&nbsp;
+          <span class="dot low"></span> below the visibility gate, shown anyway and never hidden
+        </p>
+
+        <div id="phase-timeline-wrap">
+          <h3 class="section-heading">Phase boundaries <span id="phase-contact-rule"></span></h3>
+          <canvas id="phase-timeline" height="54"></canvas>
+          <div id="phase-tooltip"></div>
+          <p class="legend phase-legend">
+            <span class="ph-key ph-detected"></span> detected (a real signal fired)
+            <span class="ph-key ph-architectural"></span> architectural (not measured, fixed by construction)
+            <span class="ph-key ph-unreliable"></span> unreliable (forward_swing, always; see docs/STATUS.md)
+            <span class="ph-key ph-widened"></span> search range widened by a removed neighbor window
+            <span class="ph-key ph-contact"></span> contact (separately evidenced, ~94% match rate)
+          </p>
+        </div>
+
+        <section id="findings-panel">
+          <h3 class="section-heading">Findings <span class="muted" id="findings-summary"></span></h3>
+          <p class="legend finding-legend">
+            <span class="fk fk-reported"></span> reported: every trust gate passed
+            <span class="fk fk-suppressed"></span> suppressed: a trust gate failed (reason shown)
+            <span class="fk fk-na"></span> not applicable: precondition absent
+          </p>
+          <div id="findings-list"></div>
+        </section>
+      </div>
+      <aside id="sidebar">
+        <h2>Frame <span id="frame-index">-</span> / <span id="frame-total">-</span>
+          <span id="frame-time"></span></h2>
+
+        <h3>Joint angles (degrees)</h3>
+        <table id="angles-table"><thead><tr><th>joint</th><th>angle</th><th>confidence</th></tr></thead><tbody></tbody></table>
+
+        <h3>Kinematics</h3>
+        <table id="kinematics-table"><thead><tr><th>key</th><th>velocity</th><th>accel.</th></tr></thead><tbody></tbody></table>
+
+        <h3>Posture</h3>
+        <table id="posture-table"><thead><tr><th>metric</th><th>value</th><th>confidence</th></tr></thead><tbody></tbody></table>
+      </aside>
+    </main>
   </div>
-  <aside id="sidebar">
-    <h2>Frame <span id="frame-index">-</span> / <span id="frame-total">-</span>
-      <span id="frame-time"></span></h2>
 
-    <h3>Joint angles (degrees)</h3>
-    <table id="angles-table"><thead><tr><th>joint</th><th>angle</th><th>confidence</th></tr></thead><tbody></tbody></table>
-
-    <h3>Kinematics</h3>
-    <table id="kinematics-table"><thead><tr><th>key</th><th>velocity</th><th>accel.</th></tr></thead><tbody></tbody></table>
-
-    <h3>Posture</h3>
-    <table id="posture-table"><thead><tr><th>metric</th><th>value</th><th>confidence</th></tr></thead><tbody></tbody></table>
+  <aside id="history-panel" class="panel">
+    <h3 class="section-heading">This session</h3>
+    <p class="muted small">Derived results only, newest first, last 20. Gone when the server restarts.</p>
+    <ul id="history-list"></ul>
   </aside>
-</main>
+</div>
 
 <script src="app.js"></script>
 </body>
