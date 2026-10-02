@@ -29,7 +29,9 @@ Everything on this page is computed from the current code and test run, not hand
 
 | File | Lines | ABC contracts | Protocol contracts | Concrete classes |
 |---|---|---|---|---|
-| `engine/phases/contact_detection.py` | 205 | - | - | `WristSpeedSample`, `ContactCandidate`, `SwingWindow` |
+| `engine/phases/analysis_result_builder.py` | 195 | - | - | - |
+| `engine/phases/contact_detection.py` | 233 | - | - | `WristSpeedSample`, `ContactCandidate`, `SwingWindow` |
+| `engine/phases/frame_timing.py` | 56 | - | - | - |
 | `engine/phases/phase_detector.py` | 290 | `PhaseDetector.detect()` | - | `KinematicPhaseDetector` |
 | `engine/phases/timing.py` | 19 | `TimingAnalyzer.analyze()` | - | `PhaseTiming` |
 | `engine/scoring/benchmarks.py` | 17 | - | - | `BenchmarkSet` |
@@ -39,13 +41,14 @@ Everything on this page is computed from the current code and test run, not hand
 | `engine/calibration/interfaces.py` | 29 | - | `CalibrationProvider.load()`, `CalibrationProvider.pixel_to_world()` | `CameraIntrinsics`, `CalibrationConfig` |
 | `engine/persistence/interfaces.py` | 35 | - | `LandmarkRepository.save()`, `LandmarkRepository.load()`, `MetricsRepository.save()`, `MetricsRepository.load()`, `ReportRepository.save()`, `ReportRepository.load()` | `StorageConfig` |
 | `engine/session/interfaces.py` | 29 | - | - | `Player`, `SessionConfig`, `Session` |
-| `engine/api/interfaces.py` | 43 | - | `AnalysisRunner.run()` | `CLIArgs`, `AnalysisRequest`, `AnalysisResponse` |
+| `engine/api/interfaces.py` | 82 | - | `AnalysisRunner.run()` | `CLIArgs`, `AnalysisRequest`, `AnalysisResponse`, `AnalysisResult` |
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 339
+- tests run: 382
 - failures: 0
 - errors: 0
-- skipped: 1
+- skipped: 2
 - skip reasons:
-  - No real backhand sample video found (looked for assets\sample_videos\backhand\sample_backhand.mp4, assets\sample_videos\backhand\sample_backhand.mov, assets\sample_videos\backhand\sample_backhand.avi, assets\sample_videos\backhand\sample_backhand.mkv) -- see assets/sample_videos/backhand/README.txt to add one
+  - Golden fixture clip assets/sample_videos/backhand/sample_backhand2.mp4 not present (local-only, not committed)
+  - Golden fixture clip assets/sample_videos/backhand/sample_backhand3.mp4 not present (local-only, not committed)

@@ -63,3 +63,19 @@ jobs:
         run: |
           python tools/gen_status.py
           git diff --exit-code -- docs/status_generated.md
+
+  roadmap-doc-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # tools/gen_roadmap.py is stdlib-only and only reads docs/roadmap/*.md
+      # -- no ffmpeg or pip dependencies needed, unlike gen_status.py above.
+      - name: Regenerate docs/ROADMAP.md and fail if it drifted
+        run: |
+          python tools/gen_roadmap.py
+          git diff --exit-code -- docs/ROADMAP.md
