@@ -237,5 +237,114 @@ def report() -> None:
               f"static {r['static_error_px']:6.1f}px{'   (post-gap)' if r['post_gap'] else ''}")
 
 
+# --- backward vs forward on sample_backhand3 (anchor = its calibration frame) --------------------
+#
+# Uses the production tracker (engine.calibration.floor_tracking), which stops
+# at the first gap instead of bridging it. Ground truth is read by eye at the
+# labelled swing contact frames, i.e. exactly where the per-swing use case
+# needs a court position.
+
+BH3 = "sample_backhand3"
+
+
+def _bh3_paths():
+    return (os.path.join(EVIDENCE, f"{BH3}_bidirectional_tracking.json"),
+            os.path.join(EVIDENCE, f"{BH3}_bidirectional_ground_truth.json"))
+
+
+def bidirectional_track() -> None:
+    from engine.api.interfaces import AnalysisRequest
+    from engine.calibration.floor_tracking import apply, player_boxes_from_frames, track_floor
+    from engine.pipelines.shots.shot_pipeline import ShotPipeline
+    from engine.types.shots import ShotType
+
+    with open(os.path.join(REPO_ROOT, "calibrations", f"{BH3}.json"), "r", encoding="utf-8") as f:
+        data = json.load(f)
+    cal = CourtCalibration.from_json(data)
+    video = os.path.join(REPO_ROOT, data["video_path"])
+    _r, report_ = ShotPipeline(ShotType.FOREHAND).run_with_debug(AnalysisRequest(
+        video_path=video, shot_type=ShotType.FOREHAND, player_id="x", session_id="x", handedness=None))
+    frames = report_["landmark_frames"]
+    ts = {fr.timing.frame_index: fr.timing.timestamp_ms for fr in frames}
+    boxes = player_boxes_from_frames(frames)
+    anchor = data["frame_index"]
+    clicks = {p["name"]: p["pixel"] for p in data["points"] if p["pixel"] is not None}
+    out = {"clip": BH3, "anchor_frame": anchor, "directions": {}}
+    for direction, stop in (("backward", 0), ("forward", max(ts))):
+        track_ = track_floor(video, cal, anchor, ts, direction, stop, boxes)
+        out["directions"][direction] = {
+            "stopped_at_gap": track_.stopped_at_gap, "min_inliers": track_.min_inliers,
+            "steps": [{"frame": st.frame_index, "elapsed_ms": round(st.elapsed_ms, 1), "inliers": st.inliers,
+                       "predicted_px": {n: [round(c, 2) for c in apply(st.anchor_to_frame, *xy)] for n, xy in clicks.items()}}
+                      for st in track_.steps],
+        }
+        print(f"{direction}: {len(track_.steps) - 1} steps, reached frame {track_.steps[-1].frame_index}, "
+              f"gap at {track_.stopped_at_gap}, min inliers {track_.min_inliers}")
+    with open(_bh3_paths()[0], "w", encoding="utf-8") as f:
+        json.dump(out, f)
+
+
+BH3_GT_FRAMES = (236, 191, 139, 83, 31, 340)  # labelled contacts: 1.67/3.17/4.90/6.77/8.50 s before, 1.80 s after the anchor
+
+
+def bidirectional_crops() -> None:
+    with open(_bh3_paths()[0], "r", encoding="utf-8") as f:
+        tr = json.load(f)
+    steps = {st["frame"]: st for d in tr["directions"].values() for st in d["steps"]}
+    cap = cv2.VideoCapture(os.path.join(REPO_ROOT, "assets", "sample_videos", "backhand", f"{BH3}.mp4"))
+    out_dir = os.path.join(EVIDENCE, "crops")
+    for idx in BH3_GT_FRAMES:
+        if idx not in steps:
+            print(f"frame {idx}: not reached by tracking (gap) -- no prediction to check")
+            continue
+        cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ok, frame = cap.read()
+        tiles = []
+        for name, (u, v) in steps[idx]["predicted_px"].items():
+            r, k = 60, 4
+            cx, cy = int(round(u)), int(round(v))
+            x0, y0 = max(0, cx - r), max(0, cy - r)
+            crop = cv2.resize(frame[y0:cy + r, x0:cx + r].copy(), None, fx=k, fy=k, interpolation=cv2.INTER_NEAREST)
+            for g in range(0, crop.shape[1], 40):
+                cv2.line(crop, (g, 0), (g, crop.shape[0]), (255, 0, 255), 1)
+            for g in range(0, crop.shape[0], 40):
+                cv2.line(crop, (0, g), (crop.shape[1], g), (255, 0, 255), 1)
+            P = (int((u - x0) * k), int((v - y0) * k))
+            cv2.drawMarker(crop, P, (0, 255, 0), cv2.MARKER_CROSS, 18, 1)
+            cv2.putText(crop, f"{name} f{idx} ({steps[idx]['elapsed_ms'] / 1000:.2f}s from anchor)", (4, crop.shape[0] - 6),
+                        0, 0.4, (0, 255, 255), 1)
+            crop = cv2.copyMakeBorder(crop, 0, 480 - crop.shape[0], 0, 480 - crop.shape[1], cv2.BORDER_CONSTANT)
+            tiles.append(crop)
+        cv2.imwrite(os.path.join(out_dir, f"{BH3}_f{idx}.jpg"), np.hstack(tiles), [cv2.IMWRITE_JPEG_QUALITY, 85])
+    print("crops written (grid every 10 image px; green cross = tracker prediction at crop centre (240,240); 4 crop px = 1 image px)")
+
+
+def bidirectional_report() -> None:
+    track_path, gt_path = _bh3_paths()
+    with open(track_path, "r", encoding="utf-8") as f:
+        tr = json.load(f)
+    with open(gt_path, "r", encoding="utf-8") as f:
+        gt = json.load(f)
+    with open(os.path.join(REPO_ROOT, "calibrations", f"{BH3}.json"), "r", encoding="utf-8") as f:
+        clicks = {p["name"]: p["pixel"] for p in json.load(f)["points"] if p["pixel"] is not None}
+    steps = {st["frame"]: (d, st) for d, dd in tr["directions"].items() for st in dd["steps"]}
+    rows = []
+    for entry in gt["frames"]:
+        direction, st = steps[entry["frame"]]
+        for name, true_px in entry["points"].items():
+            if true_px is None:
+                continue
+            rows.append({"frame": entry["frame"], "direction": direction, "elapsed_ms": st["elapsed_ms"], "point": name,
+                         "tracked_error_px": round(math.dist(st["predicted_px"][name], true_px), 1),
+                         "static_error_px": round(math.dist(clicks[name], true_px), 1)})
+    with open(os.path.join(EVIDENCE, f"{BH3}_bidirectional_errors.json"), "w", encoding="utf-8") as f:
+        json.dump({"clip": BH3, "per_point": rows}, f, indent=2)
+        f.write("\n")
+    for r in sorted(rows, key=lambda r: (r["direction"], r["elapsed_ms"])):
+        print(f"{r['direction']:8s} {r['elapsed_ms'] / 1000:5.2f}s f{r['frame']:<4d} {r['point']:22s} tracked {r['tracked_error_px']:6.1f}px"
+              f"   static {r['static_error_px']:6.1f}px")
+
+
 if __name__ == "__main__":
-    {"track": track, "crops": crops, "report": report}[sys.argv[1]]()
+    {"track": track, "crops": crops, "report": report, "bidirectional-track": bidirectional_track,
+     "bidirectional-crops": bidirectional_crops, "bidirectional-report": bidirectional_report}[sys.argv[1]]()

@@ -1,0 +1,126 @@
+{
+  "clip": "sample_backhand3",
+  "method": "Placed by Claude reading line-centre junctions off 4x crops (tools/camera_motion_experiment.py bidirectional-crops), as offsets from the tracker's marked prediction; precision roughly +/-1.5 px. null = junction hidden by the player, or the prediction fell outside the frame. front_right_corner is the calibration's inferred point (end of the tin-board base), so its readings are the least certain.",
+  "frames": [
+    {
+      "frame": 236,
+      "points": {
+        "front_left_corner": [
+          182.0,
+          993.4
+        ],
+        "front_right_corner": [
+          1072.1,
+          938.1
+        ],
+        "short_line_left_wall": [
+          82.1,
+          1194.5
+        ],
+        "left_box_front_inner": null,
+        "left_box_back_inner": null
+      }
+    },
+    {
+      "frame": 191,
+      "points": {
+        "front_left_corner": [
+          179.3,
+          992.3
+        ],
+        "front_right_corner": [
+          1071.5,
+          936.9
+        ],
+        "short_line_left_wall": [
+          79.6,
+          1191.4
+        ],
+        "left_box_front_inner": null,
+        "left_box_back_inner": [
+          644.7,
+          1303.4
+        ]
+      }
+    },
+    {
+      "frame": 139,
+      "points": {
+        "front_left_corner": [
+          175.9,
+          987.1
+        ],
+        "front_right_corner": [
+          1065.5,
+          927.5
+        ],
+        "short_line_left_wall": [
+          75.4,
+          1189.2
+        ],
+        "left_box_front_inner": null,
+        "left_box_back_inner": null
+      }
+    },
+    {
+      "frame": 83,
+      "points": {
+        "front_left_corner": [
+          210.2,
+          970.5
+        ],
+        "front_right_corner": null,
+        "short_line_left_wall": [
+          112.4,
+          1169.7
+        ],
+        "left_box_front_inner": [
+          582.0,
+          1136.2
+        ],
+        "left_box_back_inner": null
+      }
+    },
+    {
+      "frame": 31,
+      "points": {
+        "front_left_corner": [
+          102.4,
+          964.9
+        ],
+        "front_right_corner": [
+          990.9,
+          915.6
+        ],
+        "short_line_left_wall": null,
+        "left_box_front_inner": [
+          478.1,
+          1134.7
+        ],
+        "left_box_back_inner": [
+          579.0,
+          1278.0
+        ]
+      }
+    },
+    {
+      "frame": 340,
+      "points": {
+        "front_left_corner": [
+          137.4,
+          989.6
+        ],
+        "front_right_corner": [
+          1028.5,
+          938.7
+        ],
+        "short_line_left_wall": [
+          33.2,
+          1192.5
+        ],
+        "left_box_front_inner": null,
+        "left_box_back_inner": null
+      }
+    }
+  ]
+}
