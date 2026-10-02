@@ -3,7 +3,7 @@
 
 Generated from the frontmatter of each node file in `docs/roadmap/`. To change a status or a dependency, edit that node's file and re-run `python tools/gen_roadmap.py`; CI fails if this page is stale. Statuses are claims about the repository, so each node file's prose should cite the evidence behind its status. For what the code actually contains today, see `docs/status_generated.md`.
 
-17 nodes (shipped: 2, validated: 1, in-progress: 4, research: 1, not-started: 9).
+18 nodes (shipped: 2, validated: 1, in-progress: 5, not-started: 10).
 
 ## Dependency graph
 
@@ -13,8 +13,9 @@ An arrow `A --> B` means B depends on A.
 graph LR
     analysis_result_contract["analysis-result-contract<br/><i>shipped</i>"]
     ball_tracking["ball-tracking<br/><i>not-started</i>"]
-    camera_motion_tracking["camera-motion-tracking<br/><i>research</i>"]
+    camera_motion_tracking["camera-motion-tracking<br/><i>in-progress</i>"]
     contact_phase_detection["contact-phase-detection<br/><i>in-progress</i>"]
+    continuous_camera_tracking["continuous-camera-tracking<br/><i>not-started</i>"]
     court_calibration["court-calibration<br/><i>in-progress</i>"]
     demo_launch["demo-launch<br/><i>in-progress</i>"]
     findings_engine["findings-engine<br/><i>in-progress</i>"]
@@ -30,6 +31,7 @@ graph LR
     tracking_biomechanics["tracking-biomechanics<br/><i>validated</i>"]
     court_calibration --> camera_motion_tracking
     tracking_biomechanics --> contact_phase_detection
+    camera_motion_tracking --> continuous_camera_tracking
     tracking_biomechanics --> court_calibration
     analysis_result_contract --> demo_launch
     findings_engine --> demo_launch
@@ -62,9 +64,8 @@ graph LR
     classDef not_started fill:#eaeef2,stroke:#8c959f,color:#24292f
     class analysis_result_contract,pose_backend_decision shipped
     class tracking_biomechanics validated
-    class contact_phase_detection,court_calibration,demo_launch,findings_engine in_progress
-    class camera_motion_tracking research
-    class ball_tracking,loss_explanation_coach,multi_person_tracking,multiplayer_heatmap,player_reid,rally_point_match_segmentation,shot_outcome,shot_type_classifier,single_player_heatmap not_started
+    class camera_motion_tracking,contact_phase_detection,court_calibration,demo_launch,findings_engine in_progress
+    class ball_tracking,continuous_camera_tracking,loss_explanation_coach,multi_person_tracking,multiplayer_heatmap,player_reid,rally_point_match_segmentation,shot_outcome,shot_type_classifier,single_player_heatmap not_started
 ```
 
 ## Nodes by status
@@ -82,26 +83,22 @@ graph LR
 |---|---|---|---|
 | [`tracking-biomechanics`](roadmap/tracking-biomechanics.md) | - | `contact-phase-detection`, `court-calibration`, `demo-launch`, `findings-engine`, `shot-type-classifier` | Single-person pose tracking plus joint angles, kinematics and posture measurements per frame, with explicit per-measurement validity and confidence. |
 
-### in-progress (4)
+### in-progress (5)
 
 | Node | Depends on | Blocks | Goal |
 |---|---|---|---|
+| [`camera-motion-tracking`](roadmap/camera-motion-tracking.md) | `court-calibration` | `continuous-camera-tracking` | Court positions for **individual swings** on moving-camera footage. The calibration is carried a short way, forwards or backwards, from its anchor frame to a swing's contact frame by tracking the floor. This short-horizon, per-swing case is the **v1 scope**. |
 | [`contact-phase-detection`](roadmap/contact-phase-detection.md) | `tracking-biomechanics` | `findings-engine`, `shot-type-classifier` | Detect each swing in a clip, its contact frame, and its phase boundaries (prep, backswing, forward swing, contact, follow-through, recovery) from wrist-speed and rotation kinematics. |
 | [`court-calibration`](roadmap/court-calibration.md) | `tracking-biomechanics` | `camera-motion-tracking`, `multiplayer-heatmap`, `shot-outcome`, `single-player-heatmap` | Map a player's foot position from pixel space to real court coordinates (metres), through a floor homography computed from manually placed court landmarks. Automatic court-line detection waits until manual calibration is proven. |
 | [`demo-launch`](roadmap/demo-launch.md) | `analysis-result-contract`, `findings-engine`, `tracking-biomechanics` | - | A local upload-and-review demo: upload a clip and see the skeleton overlay, per-frame measurements with their validity, phase output and findings, without reading JSON. |
 | [`findings-engine`](roadmap/findings-engine.md) | `analysis-result-contract`, `contact-phase-detection`, `tracking-biomechanics` | `demo-launch`, `loss-explanation-coach` | Deterministic within-player findings: swing-to-swing consistency, left/right asymmetry, and elbow→wrist sequencing. Each finding is a measured number with explicit trust gates, never a narrative or a verdict label. |
 
-### research (1)
-
-| Node | Depends on | Blocks | Goal |
-|---|---|---|---|
-| [`camera-motion-tracking`](roadmap/camera-motion-tracking.md) | `court-calibration` | - | Keep a court calibration valid while the camera moves (handheld, panning or zooming), so that court coordinates work on the footage people actually record, without requiring a tripod. |
-
-### not-started (9)
+### not-started (10)
 
 | Node | Depends on | Blocks | Goal |
 |---|---|---|---|
 | [`ball-tracking`](roadmap/ball-tracking.md) | - | `shot-outcome` | Per-frame ball position, with confidence, from match footage. |
+| [`continuous-camera-tracking`](roadmap/continuous-camera-tracking.md) | `camera-motion-tracking` | - | Court coordinates for **every frame** of a moving-camera clip, so that whole-clip outputs (movement trails, heatmaps) work without a tripod. |
 | [`loss-explanation-coach`](roadmap/loss-explanation-coach.md) | `findings-engine`, `multiplayer-heatmap`, `rally-point-match-segmentation` | - | The capstone: explain why points or matches were lost, in coaching language. |
 | [`multi-person-tracking`](roadmap/multi-person-tracking.md) | `pose-backend-decision` | `multiplayer-heatmap`, `player-reid` | Track both players' skeletons in the same clip, including while they occlude each other. |
 | [`multiplayer-heatmap`](roadmap/multiplayer-heatmap.md) | `court-calibration`, `multi-person-tracking`, `player-reid`, `single-player-heatmap` | `loss-explanation-coach` | An extension of `single-player-heatmap` to both players, attributing every position to the right player (for example, who controls the T). |
