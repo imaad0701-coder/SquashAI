@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "clip_id": "sample_backhand1",
+  "video_path": "C:\\squash_ai final\\assets\\sample_videos\\backhand\\sample_backhand1.mp4",
+  "swings": [
+    {
+      "shot_type": null,
+      "contact_frame": 3,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 57,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 133,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 185,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": null,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    }
+  ],
+  "camera_position": null,
+  "lighting": null,
+  "resolution": [
+    1080,
+    1920
+  ],
+  "fps": 30.0,
+  "frame_count": 242,
+  "occluded_frames": [],
+  "meta": {
+    "created_at": "2026-08-22T13:54:40",
+    "updated_at": "2026-08-22T13:58:25",
+    "last_frame_viewed": 241,
+    "current_swing_index": 4
+  }
+}

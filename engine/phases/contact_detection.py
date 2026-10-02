@@ -28,40 +28,55 @@ from typing import Callable, Final
 
 from engine.biomechanics.kinematics.derivatives import DerivativeConfig, DerivativeMethod
 from engine.biomechanics.kinematics.velocity import VelocityCalculator
+from engine.phases.frame_timing import ms_per_frame, ms_to_frames
 from engine.types.landmarks import LandmarkFrame, PoseLandmarkName
 from engine.utils.geometry import magnitude
 
 _DERIVATIVE_CONFIG = DerivativeConfig(method=DerivativeMethod.CENTRAL_DIFFERENCE)
 
 # SWING_SPEED_THRESHOLD_FRACTION is still an untuned starting guess -- not fit
-# against labels/. The other two were tuned against the 5 labelled clips in
-# labels/ (2026-08-27); see tools/eval_phases.py for where they stand.
+# against labels/. The other two are expressed in real time (milliseconds),
+# not frame counts (2026-08-29): the corpus is mixed frame rate --
+# sample_forehand1.mp4 measures 59.895fps, the other 5 clips 30.000fps -- and
+# a frame count means a different real-time tolerance depending on which one
+# a clip happens to be. segment_swing_windows() converts these to a
+# frame-equivalent per clip via engine.phases.frame_timing, using that
+# clip's own measured rate, not an assumed 30fps. See
+# docs/STATUS.md's engine/phases known limitations for why duration alone
+# (in *either* unit) still can't cleanly separate real swings from
+# incidental motion -- these are the values chosen despite that, not a claim
+# the underlying problem is solved.
 SWING_SPEED_THRESHOLD_FRACTION: Final[float] = 0.25  # of the clip's own peak speed, counts as "swinging"
 
-# Kept at 15, not lowered: sample_backhand3's 3 merged windows need <=5 to
-# split (measured: shortest below-threshold run between two real contacts is
-# 5 frames, between labelled contacts 191 and 236). But sample_forehand1 has
-# a genuine single swing (contact frame 600, window 558-609) with a 12-frame
-# internal below-threshold dip -- going below 13 splits that real swing in
-# two. Checked whether a separate, lower "how still" depth threshold could
+# 500ms = 15 frames at 30fps -- the exact value tuned 2026-08-27. Kept, not
+# lowered: sample_backhand3's 3 merged windows need <=~167ms to split
+# (measured: shortest below-threshold run between two real contacts is 5
+# frames = 167ms at 30fps). But sample_forehand1 has a genuine single swing
+# with an internal below-threshold dip measuring 12 frames = 401ms at its
+# own 59.895fps rate -- going below that splits that real swing in two.
+# Checked whether a separate, lower "how still" depth threshold could
 # decouple the two clips instead of "how long": it can't -- backhand3's real
 # rests measure 5.1-7.0% of clip peak speed at their deepest point, and
 # forehand1 has genuine internal dips at 6.4% and 6.9% (one clip's real dip
 # is literally deeper, 3.4%, than all four of the other clip's real rests).
-# No single threshold, on duration or depth, separates them. Left at the
-# value that's safe for forehand1 (and the other 4 clips); backhand3 stays
-# under-segmented as a known, currently-unfixed limitation.
-SWING_MIN_REST_GAP_FRAMES: Final[int] = 15  # consecutive below-threshold frames required to split two swings
+# No single threshold, on duration or depth, separates them, in frames or in
+# ms. Left at the value that's safe for forehand1 (and the other 4 clips);
+# backhand3 stays under-segmented as a known, currently-unfixed limitation.
+SWING_MIN_REST_GAP_MS: Final[float] = 500.0  # real time required to split two swings
 
-# Raised from 5: every incidental (non-real) window across the 5 labelled
-# clips is <=12 frames (worst: sample_forehand2's window at frames 191-202,
-# 12 frames) except two windows (sample_backhand3's trailing 25-frame window,
-# sample_forehand2's other 22-frame window) that are longer than some real
-# swings elsewhere and can't be filtered by length without losing those --
-# left as unfixed by this constant. Every real (labelled) window across all 5
-# clips is >=19 frames (sample_forehand1's shortest). 13 sits in the clean gap
-# between the two (>12, <19), with margin on both sides.
-SWING_MIN_WINDOW_FRAMES: Final[int] = 13  # minimum active-window length to count as a real swing, not noise
+# Re-tuned 2026-08-29 from 433ms (the exact 30fps-equivalent of the prior
+# 13-frame value) down to 250ms, after the frame-rate-independence fix
+# exposed that 433ms would have dropped 5 of sample_forehand1's 7 real
+# swings (19f/317ms-24f/401ms at its own 59.895fps rate) -- the frame-based
+# value only ever worked because it was tuned on a fixed-rate corpus where
+# forehand1's swings happened to be long enough in frames, not because
+# duration cleanly separates real swings from incidental motion. It doesn't,
+# in either unit -- see docs/STATUS.md's engine/phases known limitations.
+# 250ms preserves every real window in the labelled corpus but re-admits a
+# small number of incidental windows that 433ms/13-frames used to filter
+# (quantified in the Part 0 regression report, 2026-08-29) -- a real,
+# accepted cost of frame-rate independence, not a free improvement.
+SWING_MIN_WINDOW_MS: Final[float] = 250.0  # minimum active-window duration to count as a real swing, not noise
 
 
 @dataclass(frozen=True)
@@ -151,8 +166,8 @@ CONTACT_RULES = {
 def segment_swing_windows(
     speeds: tuple[WristSpeedSample, ...],
     speed_threshold_fraction: float = SWING_SPEED_THRESHOLD_FRACTION,
-    min_rest_gap_frames: int = SWING_MIN_REST_GAP_FRAMES,
-    min_window_frames: int = SWING_MIN_WINDOW_FRAMES,
+    min_rest_gap_frames: int | None = None,
+    min_window_frames: int | None = None,
 ) -> tuple[SwingWindow, ...]:
     """Splits a clip into candidate swing windows: stretches of frame
     indices where wrist speed sustains at or above `speed_threshold_fraction`
@@ -161,7 +176,13 @@ def segment_swing_windows(
     is treated as jitter within one swing, not a real separation). Windows
     shorter than `min_window_frames` are dropped as noise. Operates on frame
     index, not list position, so a missing/invalid sample can't silently
-    stitch two separate active stretches together."""
+    stitch two separate active stretches together.
+
+    `min_rest_gap_frames`/`min_window_frames` left as None (the normal case)
+    derive from SWING_MIN_REST_GAP_MS/SWING_MIN_WINDOW_MS and this clip's own
+    measured frame rate (engine.phases.frame_timing), not an assumed 30fps --
+    pass an explicit int to override that (existing tests that probe specific
+    frame-count edge cases do, and keep working unchanged)."""
     valid = [s for s in speeds if s.speed is not None]
     if not valid:
         return ()
@@ -169,6 +190,13 @@ def segment_swing_windows(
     if peak <= 0:
         return ()
     threshold = speed_threshold_fraction * peak
+
+    if min_rest_gap_frames is None or min_window_frames is None:
+        rate = ms_per_frame(speeds)
+        if min_rest_gap_frames is None:
+            min_rest_gap_frames = ms_to_frames(SWING_MIN_REST_GAP_MS, rate)
+        if min_window_frames is None:
+            min_window_frames = ms_to_frames(SWING_MIN_WINDOW_MS, rate)
 
     active_frames = sorted(s.frame_index for s in valid if s.speed >= threshold)
     if not active_frames:

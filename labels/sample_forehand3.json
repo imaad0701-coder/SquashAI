@@ -1,0 +1,238 @@
+{
+  "schema_version": 2,
+  "clip_id": "sample_forehand3",
+  "video_path": "C:\\squash_ai final\\assets\\sample_videos\\sample_forehand3.mp4",
+  "swings": [
+    {
+      "shot_type": null,
+      "contact_frame": null,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 37,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 96,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 155,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 214,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 271,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 330,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 388,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 446,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 505,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 564,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 622,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 682,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 738,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 796,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 916,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 974,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 1035,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    }
+  ],
+  "camera_position": null,
+  "lighting": null,
+  "resolution": [
+    720,
+    720
+  ],
+  "fps": 30.0,
+  "frame_count": 1039,
+  "occluded_frames": [],
+  "meta": {
+    "created_at": "2026-08-27T11:48:26",
+    "updated_at": "2026-08-27T11:53:07",
+    "last_frame_viewed": 1035,
+    "current_swing_index": 17
+  }
+}

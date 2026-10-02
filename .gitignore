@@ -13,10 +13,16 @@ assets/outputs/
 # Local, machine-specific Claude Code settings.
 .claude/settings.local.json
 
+# Downloaded mediapipe Tasks API model bundles (tools/pose_ab.py) -- fetched
+# on demand, not project source.
+tools/.model_cache/
+
 # Real video source data, not committed by default (see
 # assets/sample_videos/backhand/README.txt) -- sample_backhand.mp4 in that
 # same folder is the one deliberate, small (<5MB) exception, committed as a
 # CI test fixture, so it is NOT listed here.
+assets/sample_videos/backhand/sample_backhand1.mp4
 assets/sample_videos/backhand/sample_backhand2.mp4
+assets/sample_videos/backhand/sample_backhand3.mp4
 assets/sample_videos/qa_variants/
 assets/sample_videos/*.mp4

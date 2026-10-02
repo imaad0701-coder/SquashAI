@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "clip_id": "sample_backhand3",
+  "video_path": "C:\\squash_ai final\\assets\\sample_videos\\backhand\\sample_backhand3.mp4",
+  "swings": [
+    {
+      "shot_type": null,
+      "contact_frame": 31,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 83,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 139,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 191,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 236,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": null,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 287,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    },
+    {
+      "shot_type": null,
+      "contact_frame": 340,
+      "phase_boundaries": {
+        "prep": null,
+        "backswing": null,
+        "forward_swing": null,
+        "contact": null,
+        "follow_through": null,
+        "recovery": null
+      }
+    }
+  ],
+  "camera_position": null,
+  "lighting": null,
+  "resolution": [
+    1080,
+    1920
+  ],
+  "fps": 30.0,
+  "frame_count": 396,
+  "occluded_frames": [],
+  "meta": {
+    "created_at": "2026-08-22T14:04:04",
+    "updated_at": "2026-08-22T15:47:35",
+    "last_frame_viewed": 340,
+    "current_swing_index": 7
+  }
+}

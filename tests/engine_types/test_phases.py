@@ -58,7 +58,7 @@ class PhaseBoundaryTests(unittest.TestCase):
         widened_recovery = PhaseBoundary(
             frame_index=200, derivation_method=DerivationMethod.DETECTED, search_range_widened=True
         )
-        # sample_backhand3 had zero windows removed by the SWING_MIN_WINDOW_FRAMES
+        # sample_backhand3 had zero windows removed by the SWING_MIN_WINDOW_MS
         # change (confirmed same audit) -- none of its swings' ranges changed at all.
         not_widened_recovery = PhaseBoundary(
             frame_index=210, derivation_method=DerivationMethod.DETECTED, search_range_widened=False

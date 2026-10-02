@@ -57,7 +57,7 @@ class ContactRule(Enum):
 class PhaseBoundary:
     frame_index: int | None
     derivation_method: DerivationMethod
-    # Whether a neighboring window being filtered out by SWING_MIN_WINDOW_FRAMES
+    # Whether a neighboring window being filtered out by SWING_MIN_WINDOW_MS
     # widened this boundary's own search range beyond what it would otherwise
     # have been. Not speculative: confirmed 2026-08-29 across 5 of 6 labelled
     # clips (13 windows removed, ranges widened 12-112 frames, the removed
