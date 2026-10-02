@@ -1,0 +1,8 @@
+# Demo-only dependencies. Not needed by the engine, the test suite, or CI --
+# kept separate from requirements.txt/requirements-dev.txt on purpose so
+# installing/running the core project never needs FastAPI at all.
+-r ../requirements.txt
+
+fastapi
+uvicorn[standard]
+python-multipart

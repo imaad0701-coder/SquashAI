@@ -1,0 +1,117 @@
+{
+  "contact_rule": "peak_speed",
+  "swings": [
+    {
+      "prep": {
+        "frame_index": 0,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      },
+      "backswing": {
+        "frame_index": 6,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "forward_swing": {
+        "frame_index": 21,
+        "derivation_method": "unreliable",
+        "search_range_widened": false
+      },
+      "contact_frame": 32,
+      "follow_through": {
+        "frame_index": 41,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "recovery": {
+        "frame_index": 45,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      }
+    },
+    {
+      "prep": {
+        "frame_index": 100,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      },
+      "backswing": {
+        "frame_index": 191,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "forward_swing": {
+        "frame_index": 191,
+        "derivation_method": "unreliable",
+        "search_range_widened": false
+      },
+      "contact_frame": 191,
+      "follow_through": {
+        "frame_index": 201,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "recovery": {
+        "frame_index": 202,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      }
+    },
+    {
+      "prep": {
+        "frame_index": 262,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      },
+      "backswing": {
+        "frame_index": 270,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "forward_swing": {
+        "frame_index": 300,
+        "derivation_method": "unreliable",
+        "search_range_widened": false
+      },
+      "contact_frame": 342,
+      "follow_through": {
+        "frame_index": 346,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "recovery": {
+        "frame_index": 348,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      }
+    },
+    {
+      "prep": {
+        "frame_index": 360,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      },
+      "backswing": {
+        "frame_index": 369,
+        "derivation_method": "detected",
+        "search_range_widened": false
+      },
+      "forward_swing": {
+        "frame_index": 380,
+        "derivation_method": "unreliable",
+        "search_range_widened": false
+      },
+      "contact_frame": 394,
+      "follow_through": {
+        "frame_index": 395,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      },
+      "recovery": {
+        "frame_index": 395,
+        "derivation_method": "architectural",
+        "search_range_widened": false
+      }
+    }
+  ]
+}

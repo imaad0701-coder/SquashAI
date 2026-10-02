@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Squash AI engine -- preview</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Squash AI engine <span class="badge">PREVIEW / DEMO</span></h1>
+  <p class="subtitle">
+    Raw engine output only -- no scores, no coaching feedback. Phase boundaries are shown but are
+    explicitly unvalidated (see the legend below the timeline) -- forward_swing in particular is
+    known unreliable, not just untested. Nothing here is saved anywhere; closing this tab discards
+    everything.
+  </p>
+</header>
+
+<section id="upload-panel">
+  <input type="file" id="video-input" accept="video/*">
+  <label>Shot type
+    <select id="shot-type">
+      <option value="forehand">Forehand</option>
+      <option value="backhand">Backhand</option>
+    </select>
+  </label>
+  <label>Handedness (optional)
+    <select id="handedness">
+      <option value="">Unknown</option>
+      <option value="right">Right</option>
+      <option value="left">Left</option>
+    </select>
+  </label>
+  <button id="analyze-btn" disabled>Run pipeline</button>
+  <span id="status"></span>
+</section>
+
+<main id="app" hidden>
+  <div id="video-panel">
+    <div class="video-wrap">
+      <video id="video" controls></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <p class="legend">
+      <span class="dot ok"></span> visibility &ge; <span id="threshold-label"></span> (confident)
+      &nbsp;&nbsp;
+      <span class="dot low"></span> below the visibility gate -- shown anyway, never hidden
+    </p>
+
+    <div id="phase-timeline-wrap">
+      <h3 class="timeline-heading">Phase boundaries <span id="phase-contact-rule"></span></h3>
+      <canvas id="phase-timeline" height="54"></canvas>
+      <div id="phase-tooltip"></div>
+      <p class="legend phase-legend">
+        <span class="ph-key ph-detected"></span> detected (a real signal fired)
+        <span class="ph-key ph-architectural"></span> architectural (not measured -- fixed by construction)
+        <span class="ph-key ph-unreliable"></span> unreliable (forward_swing, always -- see docs/STATUS.md)
+        <span class="ph-key ph-widened"></span> search range widened by a removed neighbor window
+        <span class="ph-key ph-contact"></span> contact (separately evidenced, ~94% match rate)
+      </p>
+      <p id="phase-unavailable" class="legend" hidden>Phase detection unavailable for this clip<span id="phase-unavailable-reason"></span>.</p>
+    </div>
+  </div>
+  <aside id="sidebar">
+    <h2>Frame <span id="frame-index">-</span> / <span id="frame-total">-</span>
+      <span id="frame-time"></span></h2>
+
+    <h3>Joint angles (degrees)</h3>
+    <table id="angles-table"><thead><tr><th>joint</th><th>angle</th><th>confidence</th></tr></thead><tbody></tbody></table>
+
+    <h3>Kinematics</h3>
+    <table id="kinematics-table"><thead><tr><th>key</th><th>velocity</th><th>accel.</th></tr></thead><tbody></tbody></table>
+
+    <h3>Posture</h3>
+    <table id="posture-table"><thead><tr><th>metric</th><th>value</th><th>confidence</th></tr></thead><tbody></tbody></table>
+  </aside>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

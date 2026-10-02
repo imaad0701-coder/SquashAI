@@ -1,0 +1,61 @@
+{
+  "contact_rule": "peak_speed",
+  "swings": [
+    {
+      "prep": {
+        "frame_index": 0,
+        "derivation_method": "architectural",
+        "search_range_widened": true
+      },
+      "backswing": {
+        "frame_index": 1,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      },
+      "forward_swing": {
+        "frame_index": 28,
+        "derivation_method": "unreliable",
+        "search_range_widened": true
+      },
+      "contact_frame": 40,
+      "follow_through": {
+        "frame_index": 45,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      },
+      "recovery": {
+        "frame_index": 46,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      }
+    },
+    {
+      "prep": {
+        "frame_index": 126,
+        "derivation_method": "architectural",
+        "search_range_widened": true
+      },
+      "backswing": {
+        "frame_index": 126,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      },
+      "forward_swing": {
+        "frame_index": 156,
+        "derivation_method": "unreliable",
+        "search_range_widened": true
+      },
+      "contact_frame": 156,
+      "follow_through": {
+        "frame_index": 158,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      },
+      "recovery": {
+        "frame_index": 159,
+        "derivation_method": "detected",
+        "search_range_widened": true
+      }
+    }
+  ]
+}
