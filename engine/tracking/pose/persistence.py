@@ -102,6 +102,25 @@ class MissedFramePersistence:
     5-frames-stale guess are no longer indistinguishable to anything
     downstream that reads confidence, which they were before this existed.
     Position is carried forward unchanged; only the confidence signals decay.
+
+    A landmark that reappears immediately after exhausting the hold budget
+    (at least one frame of genuine absence, not just a run of held frames
+    that stayed within budget) is a distinct case, de-rated the same way:
+    no continuity survived across a gap that long, so the model's own
+    reported visibility/presence on that first reappearance frame is
+    overridden -- continuing the same decay curve one step past the last
+    held frame, regardless of what the raw detector reported -- rather than
+    trusted at face value. Without this, a landmark could go fully absent
+    for many frames and then reappear reading as an ordinary, fully
+    confident detection, with nothing downstream (including
+    find_landmark_discontinuities, which only compares two already-present
+    frames and has no way to evaluate a reappearance with no valid prior
+    frame to compare against) able to tell the difference. See
+    docs/bugs/discontinuity-detector-gap.md for the validated real-video
+    case this fixes. A landmark reappearing from a gap that never exceeded
+    budget (every intervening frame was successfully held) is unaffected --
+    find_landmark_discontinuities can and does evaluate that transition
+    normally, since both sides are present.
     """
 
     def __init__(self, decay_model: ConfidenceDecayModel | None = None) -> None:
@@ -112,12 +131,21 @@ class MissedFramePersistence:
     ) -> tuple[LandmarkFrame, ...]:
         last_known: dict[PoseLandmarkName, Landmark] = {}
         missed_counts: dict[PoseLandmarkName, int] = {}
+        exhausted: set[PoseLandmarkName] = set()
         result: list[LandmarkFrame] = []
 
         for current in frames:
             filled = dict(current.pose_landmarks)
             for name in PoseLandmarkName:
                 if name in current.pose_landmarks:
+                    if name in exhausted:
+                        fresh = current.pose_landmarks[name]
+                        filled[name] = Landmark(
+                            position=fresh.position,
+                            visibility=self._decay.decay(fresh.visibility, max_missed_frames + 1),
+                            presence=self._decay.decay(fresh.presence, max_missed_frames + 1),
+                        )
+                        exhausted.discard(name)
                     last_known[name] = current.pose_landmarks[name]
                     missed_counts[name] = 0
                     continue
@@ -130,6 +158,8 @@ class MissedFramePersistence:
                         presence=self._decay.decay(source.presence, frames_held),
                     )
                     missed_counts[name] = frames_held
+                elif name in last_known:
+                    exhausted.add(name)
             result.append(
                 LandmarkFrame(
                     timing=current.timing,

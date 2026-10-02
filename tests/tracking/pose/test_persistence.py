@@ -174,5 +174,112 @@ class MissedFramePersistenceConfidenceDecayTests(unittest.TestCase):
         self.assertLessEqual(below_threshold_frame, 5)
 
 
+class MissedFramePersistenceReappearanceAfterGapTests(unittest.TestCase):
+    """A landmark reappearing right after exhausting the hold budget (>=1
+    frame of genuine absence, not just a run that stayed within budget) must
+    be de-rated on that first reappearance frame, regardless of its own
+    reported visibility -- see docs/bugs/discontinuity-detector-gap.md."""
+
+    def test_reappearance_after_exceeding_budget_is_derated_by_the_same_curve(self) -> None:
+        # max_missed_frames=1: frames 1,2 missing exceeds the 1-frame budget
+        # (frame1 held, frame2 exhausts it -- genuine absence), frame3 is a
+        # fresh reappearance.
+        frames = tuple(
+            _frame(i, with_nose) for i, with_nose in enumerate([True, False, False, True])
+        )
+
+        result = MissedFramePersistence().apply(frames, max_missed_frames=1)
+
+        self.assertNotIn(PoseLandmarkName.NOSE, result[2].pose_landmarks)  # confirms a genuine gap occurred
+        reappeared = result[3].pose_landmarks[PoseLandmarkName.NOSE]
+        # Same decay curve as a held frame, continued one step past the
+        # budget (max_missed_frames + 1 = 2), applied to the fresh (0.9)
+        # reading -- not the pre-existing 0.9 value passed through.
+        self.assertAlmostEqual(reappeared.visibility, 0.9 * 0.75**2)
+        self.assertAlmostEqual(reappeared.presence, 0.9 * 0.75**2)
+
+    def test_reappearance_after_exceeding_budget_crosses_threshold_even_with_high_raw_confidence(self) -> None:
+        # Production default max_missed_frames=5, and a near-maximal raw
+        # confidence (0.99) -- the exact case the bug report's real-video
+        # reproduction hit (visibility 0.50-0.98 read as trustworthy).
+        # "Regardless of the model's own reported visibility" means this
+        # must land below the 0.5 threshold even here.
+        high_confidence_nose = Landmark(position=Point3D(x=1.0, y=2.0, z=3.0), visibility=0.99, presence=0.99)
+        timing0 = FrameTiming(frame_index=0, timestamp_ms=0.0, delta_time_ms=0.0)
+        frame0 = LandmarkFrame(timing=timing0, pose_landmarks={PoseLandmarkName.NOSE: high_confidence_nose})
+        gap_frames = [
+            LandmarkFrame(
+                timing=FrameTiming(frame_index=i, timestamp_ms=i * 100.0, delta_time_ms=100.0), pose_landmarks={}
+            )
+            for i in range(1, 8)  # 7 consecutive misses, exceeds a 5-frame budget
+        ]
+        reappear = LandmarkFrame(
+            timing=FrameTiming(frame_index=8, timestamp_ms=800.0, delta_time_ms=100.0),
+            pose_landmarks={PoseLandmarkName.NOSE: high_confidence_nose},
+        )
+        frames = (frame0, *gap_frames, reappear)
+
+        result = MissedFramePersistence().apply(frames, max_missed_frames=5)
+
+        self.assertNotIn(PoseLandmarkName.NOSE, result[6].pose_landmarks)  # confirms budget was exceeded
+        self.assertLess(result[8].pose_landmarks[PoseLandmarkName.NOSE].visibility, 0.5)
+
+    def test_reappearance_within_budget_is_unaffected(self) -> None:
+        # Gap of 2 frames against a budget of 3 -- every intervening frame
+        # was successfully held, never genuinely absent, so this is NOT the
+        # gap-exceeding-budget case and must keep the pre-existing
+        # full-confidence-reset behavior.
+        frames = tuple(
+            _frame(i, with_nose) for i, with_nose in enumerate([True, False, False, True])
+        )
+
+        result = MissedFramePersistence().apply(frames, max_missed_frames=3)
+
+        self.assertIn(PoseLandmarkName.NOSE, result[1].pose_landmarks)  # held, not absent
+        self.assertIn(PoseLandmarkName.NOSE, result[2].pose_landmarks)  # held, not absent
+        self.assertEqual(result[3].pose_landmarks[PoseLandmarkName.NOSE].visibility, 0.9)
+
+    def test_reappearance_position_is_the_fresh_reading_not_the_stale_one(self) -> None:
+        stale = Landmark(position=Point3D(x=1.0, y=2.0, z=3.0), visibility=0.9, presence=0.9)
+        fresh = Landmark(position=Point3D(x=50.0, y=60.0, z=70.0), visibility=0.9, presence=0.9)
+        frames = (
+            LandmarkFrame(
+                timing=FrameTiming(frame_index=0, timestamp_ms=0.0, delta_time_ms=0.0),
+                pose_landmarks={PoseLandmarkName.NOSE: stale},
+            ),
+            LandmarkFrame(
+                timing=FrameTiming(frame_index=1, timestamp_ms=100.0, delta_time_ms=100.0), pose_landmarks={}
+            ),
+            LandmarkFrame(
+                timing=FrameTiming(frame_index=2, timestamp_ms=200.0, delta_time_ms=100.0), pose_landmarks={}
+            ),
+            LandmarkFrame(
+                timing=FrameTiming(frame_index=3, timestamp_ms=300.0, delta_time_ms=100.0),
+                pose_landmarks={PoseLandmarkName.NOSE: fresh},
+            ),
+        )
+
+        result = MissedFramePersistence().apply(frames, max_missed_frames=1)
+
+        # Position is the fresh detection's own reading, not carried over
+        # from the stale pre-gap position -- only confidence is de-rated.
+        self.assertEqual(result[3].pose_landmarks[PoseLandmarkName.NOSE].position, fresh.position)
+
+    def test_derated_reappearance_does_not_compound_on_a_later_hold(self) -> None:
+        # ConfidenceDecayModel's contract: decay is always computed against
+        # the pristine last-real-detection value, never a previously-decayed
+        # one. A frame held immediately after a de-rated reappearance must
+        # decay from the reappearance's own *raw* 0.9, not from its
+        # already-lowered output value.
+        frames = tuple(
+            _frame(i, with_nose) for i, with_nose in enumerate([True, False, False, True, False])
+        )
+
+        result = MissedFramePersistence().apply(frames, max_missed_frames=1)
+
+        held_after_reappearance = result[4].pose_landmarks[PoseLandmarkName.NOSE]
+        self.assertAlmostEqual(held_after_reappearance.visibility, 0.9 * 0.75)
+
+
 if __name__ == "__main__":
     unittest.main()
