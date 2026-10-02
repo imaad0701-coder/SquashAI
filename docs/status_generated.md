@@ -36,8 +36,8 @@ Everything on this page is computed from the current code and test run, not hand
 | `engine/phases/timing.py` | 19 | `TimingAnalyzer.analyze()` | - | `PhaseTiming` |
 | `engine/scoring/benchmarks.py` | 17 | - | - | `BenchmarkSet` |
 | `engine/scoring/finding_rules.py` | 213 | - | - | `Series`, `Statistic`, `MetricSpec`, `ConsistencyRule`, `AsymmetrySeries`, `SidedMetric`, `AsymmetryRule`, `SequencingAnchor`, `SequencingRule` |
-| `engine/scoring/findings_engine.py` | 381 | - | - | `_Sample`, `_ClipView` |
-| `engine/scoring/gates.py` | 83 | - | - | - |
+| `engine/scoring/findings_engine.py` | 409 | - | - | `_Sample`, `_ClipView` |
+| `engine/scoring/gates.py` | 95 | - | - | - |
 | `engine/scoring/score_engine.py` | 14 | `ScoreEngine.score()` | - | - |
 | `engine/feedback/coach.py` | 13 | `Coach.generate_feedback()` | - | - |
 | `engine/feedback/recommendations.py` | 11 | - | `RecommendationRule.apply()` | - |
@@ -48,7 +48,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 410
+- tests run: 414
 - failures: 0
 - errors: 0
 - skipped: 2
