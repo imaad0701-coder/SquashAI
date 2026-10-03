@@ -1,0 +1,272 @@
+{
+  "method": "MediaPipe run once per clip, raw outputs replayed for the new config",
+  "clips": {
+    "sample_backhand1": {
+      "fps": 30.0,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 5,
+        "ms": 166.7,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": true,
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 2,
+            "missed": 2,
+            "false_positives": 0,
+            "mean_abs_error_frames": 4.5
+          },
+          "new": {
+            "matched": 2,
+            "missed": 2,
+            "false_positives": 0,
+            "mean_abs_error_frames": 4.5
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 2,
+            "missed": 2,
+            "false_positives": 0,
+            "mean_abs_error_frames": 3.0
+          },
+          "new": {
+            "matched": 2,
+            "missed": 2,
+            "false_positives": 0,
+            "mean_abs_error_frames": 3.0
+          }
+        }
+      }
+    },
+    "sample_backhand2": {
+      "fps": 30.0,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 5,
+        "ms": 166.7,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": true,
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 2,
+            "missed": 3,
+            "false_positives": 0,
+            "mean_abs_error_frames": 5.0
+          },
+          "new": {
+            "matched": 2,
+            "missed": 3,
+            "false_positives": 0,
+            "mean_abs_error_frames": 5.0
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 2,
+            "missed": 3,
+            "false_positives": 0,
+            "mean_abs_error_frames": 2.0
+          },
+          "new": {
+            "matched": 2,
+            "missed": 3,
+            "false_positives": 0,
+            "mean_abs_error_frames": 2.0
+          }
+        }
+      }
+    },
+    "sample_backhand3": {
+      "fps": 30.0,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 5,
+        "ms": 166.7,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": true,
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 3,
+            "missed": 4,
+            "false_positives": 1,
+            "mean_abs_error_frames": 1.0
+          },
+          "new": {
+            "matched": 3,
+            "missed": 4,
+            "false_positives": 1,
+            "mean_abs_error_frames": 1.0
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 3,
+            "missed": 4,
+            "false_positives": 1,
+            "mean_abs_error_frames": 8.0
+          },
+          "new": {
+            "matched": 3,
+            "missed": 4,
+            "false_positives": 1,
+            "mean_abs_error_frames": 8.0
+          }
+        }
+      }
+    },
+    "sample_forehand1": {
+      "fps": 59.895,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 10,
+        "ms": 167.0,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": false,
+      "landmarks": {
+        "landmarks_now_present": 152,
+        "landmarks_now_absent": 0,
+        "landmarks_changed": 37,
+        "max_visibility_delta": 0.4242516489030095,
+        "max_position_delta_px": 52.81867166715606
+      },
+      "angles": {
+        "angle_samples": 10348,
+        "became_valid": 1,
+        "became_invalid": 0,
+        "valid_value_changed": 9,
+        "max_angle_delta_deg": 5.170409516831043,
+        "median_angle_delta_deg": 1.7125445106538422
+      },
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 6,
+            "missed": 4,
+            "false_positives": 0,
+            "mean_abs_error_frames": 9.667
+          },
+          "new": {
+            "matched": 6,
+            "missed": 4,
+            "false_positives": 0,
+            "mean_abs_error_frames": 9.667
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 6,
+            "missed": 4,
+            "false_positives": 0,
+            "mean_abs_error_frames": 7.167
+          },
+          "new": {
+            "matched": 6,
+            "missed": 4,
+            "false_positives": 0,
+            "mean_abs_error_frames": 7.167
+          }
+        }
+      }
+    },
+    "sample_forehand2": {
+      "fps": 30.0,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 5,
+        "ms": 166.7,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": true,
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 4,
+            "missed": 1,
+            "false_positives": 1,
+            "mean_abs_error_frames": 8.75
+          },
+          "new": {
+            "matched": 4,
+            "missed": 1,
+            "false_positives": 1,
+            "mean_abs_error_frames": 8.75
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 4,
+            "missed": 1,
+            "false_positives": 1,
+            "mean_abs_error_frames": 10.25
+          },
+          "new": {
+            "matched": 4,
+            "missed": 1,
+            "false_positives": 1,
+            "mean_abs_error_frames": 10.25
+          }
+        }
+      }
+    },
+    "sample_forehand3": {
+      "fps": 30.0,
+      "hold_budget_old_frames": 5,
+      "hold_budget_new": {
+        "frames": 5,
+        "ms": 166.7,
+        "source": "166.7 ms converted at this clip's measured rate"
+      },
+      "debug_report_byte_identical": true,
+      "contact_rules": {
+        "peak_speed": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 17,
+            "missed": 0,
+            "false_positives": 2,
+            "mean_abs_error_frames": 2.294
+          },
+          "new": {
+            "matched": 17,
+            "missed": 0,
+            "false_positives": 2,
+            "mean_abs_error_frames": 2.294
+          }
+        },
+        "deceleration_onset": {
+          "analysis_result_identical": true,
+          "old": {
+            "matched": 17,
+            "missed": 0,
+            "false_positives": 2,
+            "mean_abs_error_frames": 2.529
+          },
+          "new": {
+            "matched": 17,
+            "missed": 0,
+            "false_positives": 2,
+            "mean_abs_error_frames": 2.529
+          }
+        }
+      }
+    }
+  }
+}

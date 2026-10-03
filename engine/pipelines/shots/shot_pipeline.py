@@ -62,6 +62,7 @@ from engine.biomechanics.posture.shoulder_angle import ShoulderAngleCalculator
 from engine.biomechanics.posture.shoulder_rotation import ShoulderRotationCalculator
 from engine.biomechanics.posture.trunk_inclination import TrunkInclinationCalculator
 from engine.biomechanics.posture.weight_transfer import WeightTransferCalculator
+from engine.phases.frame_timing import ms_per_frame, ms_to_frames
 from engine.pipelines.base_pipeline import Pipeline
 from engine.preprocessing.ffmpeg_wrapper import FFmpegFrameReader
 from engine.preprocessing.frame_extractor import FrameExtractionConfig, SampledFrameExtractor
@@ -91,6 +92,15 @@ _OPPOSITE_SIDE = {"left": "right", "right": "left"}
 
 _HANDEDNESS_NOT_SUPPLIED_REASON = "handedness_not_supplied"
 
+# MissedFramePersistence's hold budget, in real time: exactly the old
+# 5-frame default at the 30fps it was tuned on (166.7 ms), converted to a
+# frame count per clip from the clip's own measured rate
+# (engine.phases.frame_timing, same as Part 0's swing-window constants).
+# A raw 5-frame budget meant 83 ms on 59.9fps footage -- half the intended
+# tolerance. See docs/bugs/missed-frames-frame-rate.md. The confidence decay
+# applied to held frames is still per frame (not converted): see that report.
+MAX_MISSED_MS: float = 5 * 1000.0 / 30.0
+
 # The sided (left/right) subset of angle_measurements/kinematics keys --
 # trunk_inclination/pelvis_rotation/shoulder_rotation are midline measures
 # with no side to relabel (see their own module docstrings).
@@ -112,7 +122,7 @@ class ShotPipeline(Pipeline):
         pose_detector_factory: Callable[[PoseEstimatorConfig], PoseDetector] = create_mediapipe_pose_detector,
         pose_estimator_config: PoseEstimatorConfig | None = None,
         visibility_thresholds: VisibilityThresholds | None = None,
-        max_missed_frames: int = 5,
+        max_missed_frames: int | None = None,
         smoothing_config: SmoothingConfig | None = None,
         derivative_config: DerivativeConfig | None = None,
         persistence_decay_model: ConfidenceDecayModel | None = None,
@@ -127,7 +137,10 @@ class ShotPipeline(Pipeline):
         )
         self._pose_estimator_config = pose_estimator_config or PoseEstimatorConfig(
             tracker_config=TrackerConfig(
-                min_detection_confidence=0.5, min_tracking_confidence=0.5, max_missed_frames=max_missed_frames
+                min_detection_confidence=0.5, min_tracking_confidence=0.5,
+                # Config record only (nothing in the estimator reads it); the
+                # applied, per-clip budget is reported in debug_report.
+                max_missed_frames=max_missed_frames if max_missed_frames is not None else 5,
             ),
             model_complexity=1,
         )
@@ -135,6 +148,8 @@ class ShotPipeline(Pipeline):
         self._visibility_thresholds = visibility_thresholds or VisibilityThresholds(
             min_visibility=0.5, min_presence=0.5
         )
+        # None (default): MAX_MISSED_MS converted per clip. An int is an
+        # explicit fixed frame count, kept for callers/tests that need it.
         self._max_missed_frames = max_missed_frames
         self._smoothing_config = smoothing_config or SmoothingConfig(
             method=SmoothingMethod.MOVING_AVERAGE, window_size=5
@@ -202,7 +217,10 @@ class ShotPipeline(Pipeline):
         filtered = tuple(
             self._visibility_filter.filter(frame, self._visibility_thresholds) for frame in raw_landmark_frames
         )
-        persisted = self._persistence.apply(filtered, self._max_missed_frames)
+        rate = ms_per_frame([f.timing for f in raw_landmark_frames])
+        hold_budget_frames = (self._max_missed_frames if self._max_missed_frames is not None
+                              else ms_to_frames(MAX_MISSED_MS, rate))
+        persisted = self._persistence.apply(filtered, hold_budget_frames)
         smoothed = self._smoother.smooth(persisted, self._smoothing_config)
 
         angle_measurements = self._compute_joint_angles(smoothed)
@@ -241,6 +259,12 @@ class ShotPipeline(Pipeline):
             "non_racket_side": non_racket_side,
             "side_roles": side_roles,
             "racket_side_unavailable_reason": racket_side_unavailable_reason,
+            "persistence_hold_budget": {
+                "frames": hold_budget_frames,
+                "ms": None if rate is None else round(hold_budget_frames * rate, 1),
+                "source": "explicit max_missed_frames" if self._max_missed_frames is not None
+                          else f"{MAX_MISSED_MS:.1f} ms converted at this clip's measured rate",
+            },
         }
         return result, debug_report
 

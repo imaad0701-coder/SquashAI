@@ -133,7 +133,7 @@ _EXPECTED_POSTURE_KEYS = {"center_of_mass", "weight_transfer", "head_stability"}
 _EXPECTED_DEBUG_REPORT_KEYS = {
     "video", "rotation_degrees", "frame_count_requested", "frame_count_tracked", "landmark_frames",
     "angle_measurements", "kinematics", "posture", "handedness", "racket_side", "non_racket_side", "side_roles",
-    "racket_side_unavailable_reason",
+    "racket_side_unavailable_reason", "persistence_hold_budget",
 }
 _SIDED_JOINTS = ("knee", "hip", "elbow", "shoulder", "ankle")
 
@@ -182,6 +182,42 @@ class ShotPipelineCompositionTests(unittest.TestCase):
                 self.assertAlmostEqual(middle_velocity.velocity.x, 0.0, places=6)
                 self.assertAlmostEqual(middle_velocity.velocity.y, 0.0, places=6)
                 self.assertAlmostEqual(middle_velocity.velocity.z, 0.0, places=6)
+
+
+class _SixtyFpsTimingSource:
+    def probe_frame_timestamps(self, video_path: str) -> dict[int, float | None]:
+        return {i: i / 59.895 for i in range(3)}
+
+
+class ShotPipelineHoldBudgetTests(unittest.TestCase):
+    """MissedFramePersistence's hold budget is real time (MAX_MISSED_MS,
+    166.7 ms = the old 5 frames at 30fps), converted per clip from its own
+    measured rate -- docs/bugs/missed-frames-frame-rate.md."""
+
+    def test_default_budget_is_converted_from_real_time(self) -> None:
+        # Fakes run at 10fps (100 ms/frame): 166.7 ms -> 2 frames.
+        _r, report = _pipeline(ShotType.FOREHAND).run_with_debug(_request(ShotType.FOREHAND))
+        budget = report["persistence_hold_budget"]
+        self.assertEqual(budget["frames"], 2)
+        self.assertEqual(budget["ms"], 200.0)
+        self.assertIn("converted", budget["source"])
+
+    def test_sixty_fps_gets_about_ten_frames(self) -> None:
+        pipeline = ShotPipeline(
+            ShotType.FOREHAND, video_loader=_FakeVideoLoader(), frame_timing_source=_SixtyFpsTimingSource(),
+            frame_reader=_FakeFrameReader(), pose_detector_factory=_fake_pose_detector_factory,
+        )
+        _r, report = pipeline.run_with_debug(_request(ShotType.FOREHAND))
+        self.assertEqual(report["persistence_hold_budget"]["frames"], 10)  # was a fixed 5 (83 ms) before
+
+    def test_explicit_frame_count_is_used_as_is(self) -> None:
+        pipeline = ShotPipeline(
+            ShotType.FOREHAND, video_loader=_FakeVideoLoader(), frame_timing_source=_FakeTimingSource(),
+            frame_reader=_FakeFrameReader(), pose_detector_factory=_fake_pose_detector_factory, max_missed_frames=5,
+        )
+        _r, report = pipeline.run_with_debug(_request(ShotType.FOREHAND))
+        self.assertEqual(report["persistence_hold_budget"]["frames"], 5)
+        self.assertEqual(report["persistence_hold_budget"]["source"], "explicit max_missed_frames")
 
 
 class ShotPipelineHandednessTests(unittest.TestCase):

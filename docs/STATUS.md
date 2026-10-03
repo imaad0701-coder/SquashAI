@@ -14,6 +14,10 @@ As of 2026-08-01, `engine/tracking/`, `engine/preprocessing/`, and `engine/biome
 - Measurement dataclasses in `engine/types/biomechanics.py` are backward-compatible: additive fields only, no renames/removals, no field-order changes.
 - `engine/pipelines/` is explicitly **not** covered by this freeze.
 
+### Post-freeze changes affecting frozen-layer outputs
+
+- 2026-10-03: `MissedFramePersistence`'s hold budget is now real time (166.7 ms, converted per clip by `ShotPipeline`; no frozen file edited). The 30 fps clips are byte-identical. sample_forehand1 (59.9 fps) gets 10 frames instead of 5. The per-frame confidence decay is still frame-based, and converting it is pending a decision. See `docs/bugs/missed-frames-frame-rate.md`.
+
 ### Known limitations (unfixed at freeze time, not new findings)
 
 - `CenterOfMassCalculator` (`engine/biomechanics/posture/center_of_mass.py`) uses the geometric midpoint for segment centers instead of Winter's per-segment anthropometric fraction.

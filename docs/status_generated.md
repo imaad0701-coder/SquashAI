@@ -5,7 +5,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## ShotPipeline: debug_report top-level keys
 
-`angle_measurements`, `frame_count_requested`, `frame_count_tracked`, `handedness`, `kinematics`, `landmark_frames`, `non_racket_side`, `posture`, `racket_side`, `racket_side_unavailable_reason`, `rotation_degrees`, `side_roles`, `video`
+`angle_measurements`, `frame_count_requested`, `frame_count_tracked`, `handedness`, `kinematics`, `landmark_frames`, `non_racket_side`, `persistence_hold_budget`, `posture`, `racket_side`, `racket_side_unavailable_reason`, `rotation_degrees`, `side_roles`, `video`
 
 ## ShotPipeline: wired calculators
 
@@ -53,7 +53,7 @@ Everything on this page is computed from the current code and test run, not hand
 
 ## Test suite (unittest discover ./tests, at generation time)
 
-- tests run: 447
+- tests run: 450
 - failures: 0
 - errors: 0
 - skipped: 2
